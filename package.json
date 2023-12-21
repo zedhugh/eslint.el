@@ -1,0 +1,6 @@
+{
+  "name": "emacs-flymake-eslint",
+  "version": "0.0.1",
+  "private": true,
+  "description": "better eslint plugin for flymake in emacs"
+}

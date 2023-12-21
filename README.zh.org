@@ -1,0 +1,8 @@
+* emacs-flymake-eslint
+
+emacs-flymake-eslint 的目标是为 emacs 是提供一个更快的体验更好的基于 flymake 的 eslint 插件。
+
+** 实现原理
+1. 使用 =eslint --cache= 命令以利用 eslint 的 cache 机制提供更快的检查速度。
+2. 使用额外的 node.js 程序处理 eslint 命令返回的 json 格式结果，将其解析成更精简的 json 内容，供 flymake 直接渲染。
+3. 如果可能的话使用后台常驻进程提供服务，使命令运行时跳过冷启动的初始化耗时，是命令更快，可参考 [[https://github.com/jscheid/prettier.el][prettier]] 。
