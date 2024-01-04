@@ -2,5 +2,13 @@
   "name": "emacs-flymake-eslint",
   "version": "0.0.1",
   "private": true,
-  "description": "better eslint plugin for flymake in emacs"
+  "description": "better eslint plugin for flymake in emacs",
+  "devDependencies": {
+    "@eslint/js": "^8.56.0",
+    "@types/eslint": "^8.56.0",
+    "@types/node": "^20.10.5",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  }
 }
