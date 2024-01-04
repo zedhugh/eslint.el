@@ -23,6 +23,9 @@ All buffers use the same process.")
     (emacs-flymake-eslint--kill-process)))
 
 (defun emacs-flymake-eslint--filter (process str)
+  (message "Process: %s, output:\n%s" process str))
+
+(defun emacs-flymake-eslint--json-filter (process str)
   (let* ((obj (json-parse-string str :object-type 'plist))
          (filename (plist-get obj :filename)))
     (message "filename: %s" filename)))
@@ -48,10 +51,16 @@ All buffers use the same process.")
   (emacs-flymake-eslint--kill-process)
   (setq emacs-flymake-eslint--process (emacs-flymake-eslint--create-process)))
 
-(emacs-flymake-eslint--init-process)
-(process-live-p emacs-flymake-eslint--process)
-(process-send-string emacs-flymake-eslint--process (json-serialize `(:filename ,(buffer-file-name))))
-(process-send-eof emacs-flymake-eslint--process)
+;; (emacs-flymake-eslint--init-process)
+;; (process-live-p emacs-flymake-eslint--process)
+;; (process-send-eof emacs-flymake-eslint--process)
 
+(defun emacs-flymake-eslint-lint-file (filepath)
+  (process-send-string emacs-flymake-eslint--process (json-serialize `(:filename ,filepath))))
+
+(emacs-flymake-eslint-lint-file (buffer-file-name))
+(emacs-flymake-eslint-lint-file (expand-file-name "./test.cjs" (file-name-directory buffer-file-name)))
+(emacs-flymake-eslint-lint-file (expand-file-name "./emacs-flymake-eslint.cjs" (file-name-directory buffer-file-name)))
+(emacs-flymake-eslint-lint-file (expand-file-name "./test/emacs-flymake-eslint.cjs" (file-name-directory buffer-file-name)))
 
 (provide 'emacs-flymake-eslint)

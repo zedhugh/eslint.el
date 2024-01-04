@@ -1,22 +1,14 @@
 const path = require("node:path");
 
-const eslintJs = path.join(
+const apiJs = path.join(
   __dirname,
-  "node_modules/eslint/lib/eslint/eslint.js",
-);
-const flatEslintJs = path.join(
-  __dirname,
-  "node_modules/eslint/lib/eslint/flat-eslint.js",
+  "node_modules/eslint/lib/unsupported-api.js",
 );
 
-const { FlatESLint, shouldUseFlatConfig } = require(flatEslintJs);
-const { ESLint } = require(eslintJs);
+const { FlatESLint, shouldUseFlatConfig, LegacyESLint } = require(apiJs);
 
-/**
- * @type {ESLint}
- */
 const flatEslint = new FlatESLint();
-const legacyEslint = new ESLint();
+const legacyEslint = new LegacyESLint();
 
 /**
  * @param {string} filepath
