@@ -58,9 +58,9 @@ All buffers use the same process.")
 (defun emacs-flymake-eslint-lint-file (filepath)
   (process-send-string emacs-flymake-eslint--process (json-serialize `(:filename ,filepath))))
 
-(emacs-flymake-eslint-lint-file (buffer-file-name))
-(emacs-flymake-eslint-lint-file (expand-file-name "./test.cjs" (file-name-directory buffer-file-name)))
-(emacs-flymake-eslint-lint-file (expand-file-name "./emacs-flymake-eslint.cjs" (file-name-directory buffer-file-name)))
-(emacs-flymake-eslint-lint-file (expand-file-name "./test/emacs-flymake-eslint.cjs" (file-name-directory buffer-file-name)))
+;; (emacs-flymake-eslint-lint-file (buffer-file-name))
+;; (emacs-flymake-eslint-lint-file (expand-file-name "./test.cjs" (file-name-directory buffer-file-name)))
+;; (emacs-flymake-eslint-lint-file (expand-file-name "./emacs-flymake-eslint.cjs" (file-name-directory buffer-file-name)))
+;; (emacs-flymake-eslint-lint-file (expand-file-name "./test/emacs-flymake-eslint.cjs" (file-name-directory buffer-file-name)))
 
 (provide 'emacs-flymake-eslint)

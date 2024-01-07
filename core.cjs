@@ -1,4 +1,5 @@
 /**
+ * @typedef {typeof import("eslint").ESLint} ESLintConstructor
  * @typedef {import("eslint").ESLint} ESLint
  */
 
@@ -172,12 +173,16 @@ const hasEslint = (root) => {
 const importEslint = async (root) => {
   const apiJS = path.join(root, "eslint/lib/unsupported-api.js");
   const mod = require(apiJS);
+  /**
+   * @type {{
+   *    FlatESLint: ESLintConstructor;
+   *    shouldUseFlatConfig: () => Promise<boolean>;
+   *    LegacyESLint: ESLintConstructor
+   * }}
+   */
   const { FlatESLint, shouldUseFlatConfig, LegacyESLint } = mod;
 
   const usingFlatConfig = await shouldUseFlatConfig();
-  /**
-   * @type {ESLint}
-   */
   const eslint = usingFlatConfig ? new FlatESLint() : new LegacyESLint();
   return eslint;
 };
