@@ -98,16 +98,6 @@ const hasFieldInPkgJson = (field, dir) => {
 };
 
 /**
- * @param {string} dir
- */
-const hasEslintConfig = (dir) => {
-  return (
-    filesExistInDir(eslintConfigFiles, dir) ||
-    hasFieldInPkgJson(eslintConfigField, dir)
-  );
-};
-
-/**
  * @param {string} filepath
  */
 const findEslintConfigDir = (filepath) => {
@@ -187,10 +177,7 @@ const importEslint = async (root) => {
   return eslint;
 };
 
-/**
- * @param {string} dir
- */
-const getESLintInstallDir = (dir) => {
+const getESLintInstallDir = () => {
   try {
     const root = pnpm(["root"]);
     if (hasEslint(root)) return root;
@@ -215,7 +202,7 @@ const getESLintInstallDir = (dir) => {
 };
 
 /**
- * @type {Map<string, ESLint>}
+ * @type {Map<string, ESLint | null>}
  */
 const dirESLintMap = new Map();
 /**
@@ -242,7 +229,7 @@ const getESLint = async (filepath) => {
   }
 
   process.chdir(eslintConfigDir);
-  const root = getESLintInstallDir(eslintConfigDir);
+  const root = getESLintInstallDir();
   if (!root) {
     filepathESLintMap.set(filepath, null);
     dirESLintMap.set(eslintConfigDir, null);
