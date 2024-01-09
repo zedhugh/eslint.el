@@ -99,15 +99,19 @@ All buffers use the same process.")
     (emacs-flymake-eslint--init-process))
   emacs-flymake-eslint--process)
 
-(defun emacs-flymake-eslint-lint-file (filepath)
-  (let ((process (emacs-flymake-eslint--get-process)))
+(defun emacs-flymake-eslint-lint-file (filepath &optional buffer)
+  (let ((process (emacs-flymake-eslint--get-process))
+        (code (when (bufferp buffer)
+                (with-current-buffer buffer (buffer-string)))))
     (when (process-live-p process)
-      (process-send-string process (json-serialize `(:filename ,filepath))))))
+      (process-send-string
+       process
+       (json-serialize `(:filename ,filepath :code ,code))))))
 
 (defun emacs-flymake-eslint--checker (report-fn &rest _ignore)
   (let ((filepath (buffer-file-name)))
     (when filepath
-      (emacs-flymake-eslint-lint-file filepath)
+      (emacs-flymake-eslint-lint-file filepath (current-buffer))
       (puthash filepath report-fn emacs-flymake-eslint--report-fn-map))))
 
 (defun emacs-flymake-eslint-enable ()

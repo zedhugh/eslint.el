@@ -49,6 +49,7 @@ const recvStdin = () => {
     const str = data.toString();
     const json = JSON.parse(str);
     const filename = json.filename;
+    const code = json.code;
     const eslint = await getESLint(filename);
 
     /**
@@ -60,7 +61,11 @@ const recvStdin = () => {
       return;
     }
 
-    const result = await eslint.lintFiles(filename);
+    const result = await eslint.lintText(code, {
+      filePath: filename,
+      warnIgnored: true,
+    });
+
     obj.messages = parseLintResult(result, filename);
     obj.cost = globalThis.performance.now() - start;
     stdout.write(JSON.stringify(obj));
