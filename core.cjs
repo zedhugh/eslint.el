@@ -83,7 +83,7 @@ const filesExistInDir = (files, dir) => {
   return files.some((file) => {
     const p = path.join(dir, file);
     const exist = fs.existsSync(p);
-    return exist || fs.statSync(p).isFile();
+    return exist && fs.statSync(p).isFile();
   });
 };
 
