@@ -14,3 +14,22 @@ interface ESLintMessage {
   endLine?: number;
   endColumn?: number;
 }
+
+type Command = "lint" | "close";
+
+interface BaseData {
+  cmd: Command;
+}
+
+interface LintData extends BaseData {
+  cmd: "lint";
+  filename: string;
+  code: string;
+}
+
+interface CloseFileData extends BaseData {
+  cmd: "close";
+  filename: string;
+}
+
+type InteractiveData = LintData | CloseFileData;

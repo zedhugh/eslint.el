@@ -116,7 +116,19 @@ All buffers use the same process.")
     (when (process-live-p process)
       (process-send-string
        process
-       (json-serialize `(:filename ,filepath :code ,code))))))
+       (json-serialize (list :cmd "lint" :filename filepath :code code))))))
+
+(defun emacs-flymake-eslint-kill-buffer-hook ()
+  (let ((filepath (buffer-file-name))
+        (process (when (process-live-p emacs-flymake-eslint--process)
+                   emacs-flymake-eslint--process)))
+    (when (and process filepath
+               (bound-and-true-p flymake-mode)
+               (member 'emacs-flymake-eslint--checker
+                       flymake-diagnostic-functions))
+      (process-send-string
+       process
+       (json-serialize (list :cmd "close" :filename filepath))))))
 
 (defun emacs-flymake-eslint--checker (report-fn &rest _ignore)
   (let ((filepath (buffer-file-name)))
@@ -127,7 +139,8 @@ All buffers use the same process.")
 (defun emacs-flymake-eslint-enable ()
   (when (emacs-flymake-eslint--detect-node-cmd)
     (unless (bound-and-true-p flymake-mode) (flymake-mode 1))
-    (add-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker nil t)))
+    (add-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker nil t)
+    (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook nil t)))
 
 
 (provide 'emacs-flymake-eslint)

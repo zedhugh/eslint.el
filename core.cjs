@@ -212,6 +212,23 @@ const dirESLintMap = new Map();
  * @type {Map<string, ESLint | null>}
  */
 const filepathESLintMap = new Map();
+/**
+ * @type {Map<string, Set<string>>}
+ */
+const configDir2FilepathListMap = new Map();
+
+/**
+ * @param {string} eslintConfigDir
+ * @param {string} filepath
+ */
+const addFilepath2ConfigDirMap = (eslintConfigDir, filepath) => {
+  const set = configDir2FilepathListMap.get(eslintConfigDir);
+  if (set) {
+    set.add(filepath);
+  } else {
+    configDir2FilepathListMap.set(eslintConfigDir, new Set([filepath]));
+  }
+};
 
 /**
  * @param {string} filepath
@@ -223,7 +240,10 @@ const getESLint = async (filepath) => {
 
   const eslintConfigDir = findEslintConfigDir(filepath);
   if (eslintConfigDir && dirESLintMap.has(eslintConfigDir)) {
-    return dirESLintMap.get(eslintConfigDir);
+    addFilepath2ConfigDirMap(eslintConfigDir, filepath);
+    const linter = dirESLintMap.get(eslintConfigDir);
+    filepathESLintMap.set(filepath, linter ?? null);
+    return linter;
   }
 
   if (!eslintConfigDir) {
@@ -241,9 +261,33 @@ const getESLint = async (filepath) => {
   const eslint = await importEslint(root);
   filepathESLintMap.set(filepath, eslint);
   dirESLintMap.set(eslintConfigDir, eslint);
+  addFilepath2ConfigDirMap(eslintConfigDir, filepath);
   return eslint;
+};
+
+/**
+ * @param {string} filepath
+ */
+const closeFile = (filepath) => {
+  filepathESLintMap.delete(filepath);
+
+  const eslintConfigDir = findEslintConfigDir(filepath);
+  if (!eslintConfigDir) return;
+
+  const filepathSet = configDir2FilepathListMap.get(eslintConfigDir);
+  filepathSet?.delete(filepath);
+
+  if (filepathSet?.size) return;
+
+  dirESLintMap.delete(eslintConfigDir);
+  configDir2FilepathListMap.delete(eslintConfigDir);
+
+  if (!dirESLintMap.size) {
+    process.exit(0);
+  }
 };
 
 module.exports = {
   getESLint,
+  closeFile,
 };
