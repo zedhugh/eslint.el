@@ -161,19 +161,22 @@ const hasEslint = (root) => {
  * @param {string} root
  */
 const importEslint = async (root) => {
-  const apiJS = path.join(root, "eslint/lib/unsupported-api.js");
-  const mod = require(apiJS);
+  const eslintJS = path.join(root, "eslint/lib/eslint/eslint.js");
+  const flatEslintJS = path.join(root, "eslint/lib/eslint/flat-eslint.js");
+  /**
+   * @type {{ESLint: ESLintConstructor}}
+   */
+  const { ESLint } = require(eslintJS);
   /**
    * @type {{
    *    FlatESLint: ESLintConstructor;
    *    shouldUseFlatConfig: () => Promise<boolean>;
-   *    LegacyESLint: ESLintConstructor
    * }}
    */
-  const { FlatESLint, shouldUseFlatConfig, LegacyESLint } = mod;
+  const { FlatESLint, shouldUseFlatConfig } = require(flatEslintJS);
 
   const usingFlatConfig = await shouldUseFlatConfig();
-  const eslint = usingFlatConfig ? new FlatESLint() : new LegacyESLint();
+  const eslint = usingFlatConfig ? new FlatESLint() : new ESLint();
   return eslint;
 };
 
