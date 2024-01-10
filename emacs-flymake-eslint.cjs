@@ -42,6 +42,10 @@ const parseLintResult = (result, filepath) => {
   return list;
 };
 
+process.on("unhandledRejection", (reason) => {
+  process.stderr.write(`${reason}\n`);
+});
+
 const recvStdin = () => {
   const { stdin, stdout } = process;
   stdin.on("data", async (data) => {

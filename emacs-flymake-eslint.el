@@ -25,12 +25,6 @@ All buffers use the same process.")
 (defun emacs-flymake-eslint--detect-node-cmd ()
   (locate-file "node" exec-path))
 
-(defun emacs-flymake-eslint--sentinel (process event)
-  (when (eq 'exit (process-status process))
-    (emacs-flymake-eslint--kill-process))
-  (when (hash-table-p emacs-flymake-eslint--report-fn-map)
-    (clrhash emacs-flymake-eslint--report-fn-map)))
-
 (defun emacs-flymake-eslint--parse-message (msg buffer)
   (let* ((ruleId (plist-get msg :ruleId))
          (severity (plist-get msg :severity))
@@ -57,37 +51,53 @@ All buffers use the same process.")
     (flymake-make-diagnostic buffer begin end type-symbol msg-text
                              (list :rule-name ruleId))))
 
-(defun emacs-flymake-eslint--filter (process str)
-  (let* ((obj (json-parse-string str :object-type 'plist))
-         (filepath  (plist-get obj :filename))
-         (buffer (find-buffer-visiting filepath))
-         cost messages report-fn diags)
-    (when (and filepath buffer)
-      (setq cost        (plist-get obj :cost)
-            messages    (plist-get obj :messages)
-            report-fn   (gethash filepath emacs-flymake-eslint--report-fn-map))
+(defun emacs-flymake-eslint--filter (stdout-output stderr-buffer)
+  (condition-case err
+      (let* ((obj (json-parse-string stdout-output :object-type 'plist))
+             (filepath  (plist-get obj :filename))
+             (buffer (find-buffer-visiting filepath))
+             cost messages report-fn diags)
+        (when (and filepath buffer)
+          (setq cost        (plist-get obj :cost)
+                messages    (plist-get obj :messages)
+                report-fn   (gethash filepath emacs-flymake-eslint--report-fn-map))
 
-      (setq diags (mapcar (lambda (msg)
-                            (emacs-flymake-eslint--parse-message msg buffer))
-                          messages))
-      (funcall report-fn diags)
-      (remhash filepath emacs-flymake-eslint--report-fn-map))))
+          (setq diags (mapcar (lambda (msg)
+                                (emacs-flymake-eslint--parse-message msg buffer))
+                              messages))
+          (when (functionp report-fn) (funcall report-fn diags))
+          (remhash filepath emacs-flymake-eslint--report-fn-map)))
+    (t (with-current-buffer stderr-buffer
+         (end-of-buffer)
+         (insert (format "\nerror: %s\norigin: %s" err stdout-output)))
+       (message "emacs-flymake-eslint error: %s" err))))
 
 (defun emacs-flymake-eslint--create-process ()
   (let ((node (emacs-flymake-eslint--detect-node-cmd))
         (js-file (expand-file-name
                   "emacs-flymake-eslint.cjs"
-                  emacs-flymake-eslint--home)))
+                  emacs-flymake-eslint--home))
+        buffer stderr)
     (when node
+      (setq buffer (generate-new-buffer " *emacs-flymake-eslint output*")
+            stderr (generate-new-buffer " *emacs-flymake-eslint stderr*"))
       (setq emacs-flymake-eslint--process
             (make-process
              :name "emacs-flymake-eslint"
              :connection-type 'pipe
              :noquery t
-             :buffer (generate-new-buffer " *emacs-flymake-eslint*")
+             :buffer buffer
+             :stderr stderr
              :command `("node" ,js-file)
-             :sentinel #'emacs-flymake-eslint--sentinel
-             :filter #'emacs-flymake-eslint--filter
+             :filter (lambda (process output)
+                       (emacs-flymake-eslint--filter output stderr))
+             :sentinel (lambda (process event)
+                         (when (eq 'exit (process-status process))
+                           (when (bufferp buffer) (kill-buffer buffer))
+                           (when (bufferp stderr) (kill-buffer stderr)))
+                         (when (hash-table-p emacs-flymake-eslint--report-fn-map)
+                           (clrhash emacs-flymake-eslint--report-fn-map))
+                         )
              )))))
 
 (defun emacs-flymake-eslint--init-process ()
