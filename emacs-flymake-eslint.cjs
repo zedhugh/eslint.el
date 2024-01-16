@@ -73,30 +73,24 @@ const lintFile = async (code, filename) => {
   return obj;
 };
 
-const recvStdin = () => {
-  const { stdin, stdout } = process;
-  stdin.on("data", async (data) => {
-    const str = data.toString();
-    /** @type {InteractiveData} */
-    const json = JSON.parse(str);
+process.stdin.on("data", async (data) => {
+  const str = data.toString();
+  /** @type {InteractiveData} */
+  const json = JSON.parse(str);
 
-    switch (json.cmd) {
-      case "lint": {
-        const { code, filename } = json;
-        const obj = await lintFile(code, filename);
-        stdout.write(JSON.stringify(obj));
-        break;
-      }
-      case "close": {
-        const { filename } = json;
-        filename && closeFile(filename);
-      }
+  switch (json.cmd) {
+    case "lint": {
+      const { code, filename } = json;
+      const obj = await lintFile(code, filename);
+      process.stdout.write(JSON.stringify(obj));
+      break;
     }
-  });
-};
-
-(() => {
-  return new Promise(() => {
-    recvStdin();
-  });
-})();
+    case "close": {
+      const { filename } = json;
+      filename && closeFile(filename);
+      break;
+    }
+    case "exit":
+      process.exit(0);
+  }
+});

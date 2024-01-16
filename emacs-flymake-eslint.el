@@ -57,11 +57,12 @@ All buffers use the same process.")
              (filepath  (plist-get obj :filename))
              (buffer (find-buffer-visiting filepath))
              cost messages report-fn diags)
-        (when (and filepath buffer)
+        (when (and filepath buffer
+                   (hash-table-p emacs-flymake-eslint--report-fn-map))
           (setq cost        (plist-get obj :cost)
                 messages    (plist-get obj :messages)
                 report-fn   (gethash filepath emacs-flymake-eslint--report-fn-map))
-
+          (message "cost: %sms" cost)
           (setq diags (mapcar (lambda (msg)
                                 (emacs-flymake-eslint--parse-message msg buffer))
                               messages))
@@ -69,7 +70,8 @@ All buffers use the same process.")
           (remhash filepath emacs-flymake-eslint--report-fn-map)))
     (t (with-current-buffer stderr-buffer
          (end-of-buffer)
-         (insert (format "\nerror: %s\norigin: %s" err stdout-output)))
+         (insert (format "\nerror: %s\ntype: %s, origin: %s"
+                         err (type-of stdout-output) stdout-output)))
        (message "emacs-flymake-eslint error: %s" err))))
 
 (defun emacs-flymake-eslint--create-process ()
@@ -88,7 +90,7 @@ All buffers use the same process.")
              :noquery t
              :buffer buffer
              :stderr stderr
-             :command `("node" ,js-file)
+             :command (list "node" js-file)
              :filter (lambda (process output)
                        (emacs-flymake-eslint--filter output stderr))
              :sentinel (lambda (process event)
@@ -141,6 +143,16 @@ All buffers use the same process.")
     (unless (bound-and-true-p flymake-mode) (flymake-mode 1))
     (add-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker nil t)
     (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook nil t)))
+
+(defun emacs-flymake-eslint-stop ()
+  (when (process-live-p emacs-flymake-eslint--process)
+    (process-send-string
+     emacs-flymake-eslint--process
+     (json-serialize (list :cmd "exit"))))
+  (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker)
+  (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker t)
+  (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)
+  (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook t))
 
 
 (provide 'emacs-flymake-eslint)

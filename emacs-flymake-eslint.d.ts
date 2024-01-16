@@ -15,7 +15,7 @@ interface ESLintMessage {
   endColumn?: number;
 }
 
-type Command = "lint" | "close";
+type Command = "lint" | "close" | "exit";
 
 interface BaseData {
   cmd: Command;
@@ -32,4 +32,8 @@ interface CloseFileData extends BaseData {
   filename: string;
 }
 
-type InteractiveData = LintData | CloseFileData;
+interface ExitData extends BaseData {
+  cmd: "exit";
+}
+
+type InteractiveData = LintData | CloseFileData | ExitData;

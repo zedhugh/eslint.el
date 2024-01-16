@@ -163,19 +163,38 @@ const hasEslint = (root) => {
 const importEslint = async (root) => {
   const eslintJS = path.join(root, "eslint/lib/eslint/eslint.js");
   const flatEslintJS = path.join(root, "eslint/lib/eslint/flat-eslint.js");
+
+  if (!fs.existsSync(eslintJS) && !fs.existsSync(flatEslintJS)) {
+    throw new Error("no eslint installed or not supported eslint version");
+  }
+
   /**
    * @type {{ESLint: ESLintConstructor}}
    */
   const { ESLint } = require(eslintJS);
+
+  if (!fs.existsSync(flatEslintJS)) {
+    return new ESLint();
+  }
+
   /**
    * @type {{
    *    FlatESLint: ESLintConstructor;
-   *    shouldUseFlatConfig: () => Promise<boolean>;
+   *    shouldUseFlatConfig?: () => Promise<boolean>;
+   *    findFlatConfigFile?: (cwd: string) => Promise<string | null>
    * }}
    */
-  const { FlatESLint, shouldUseFlatConfig } = require(flatEslintJS);
+  const { FlatESLint, ...mod } = require(flatEslintJS);
+  const { shouldUseFlatConfig, findFlatConfigFile } = mod;
+  let usingFlatConfig = false;
+  if (typeof shouldUseFlatConfig === "function") {
+    usingFlatConfig = await shouldUseFlatConfig();
+  }
 
-  const usingFlatConfig = await shouldUseFlatConfig();
+  if (typeof findFlatConfigFile === "function") {
+    usingFlatConfig = !!(await findFlatConfigFile(process.cwd()));
+  }
+
   const eslint = usingFlatConfig ? new FlatESLint() : new ESLint();
   return eslint;
 };
@@ -234,21 +253,37 @@ const addFilepath2ConfigDirMap = (eslintConfigDir, filepath) => {
  * @param {string} filepath
  */
 const getESLint = async (filepath) => {
-  if (filepathESLintMap.has(filepath)) {
-    return filepathESLintMap.get(filepath);
+  const eslintConfigDir = findEslintConfigDir(filepath);
+
+  const dir = path.dirname(filepath);
+  const filename = path.basename(filepath);
+  if (
+    dir === eslintConfigDir &&
+    eslintConfigFiles.some((v) => v === filename)
+  ) {
+    dirESLintMap.delete(eslintConfigDir);
+    filepathESLintMap.delete(filepath);
+    const filepathSet = configDir2FilepathListMap.get(eslintConfigDir);
+    filepathSet?.delete(filepath);
+    filepathSet?.forEach((file) => {
+      filepathESLintMap.delete(file);
+    });
   }
 
-  const eslintConfigDir = findEslintConfigDir(filepath);
-  if (eslintConfigDir && dirESLintMap.has(eslintConfigDir)) {
-    addFilepath2ConfigDirMap(eslintConfigDir, filepath);
-    const linter = dirESLintMap.get(eslintConfigDir);
-    filepathESLintMap.set(filepath, linter ?? null);
-    return linter;
+  if (filepathESLintMap.has(filepath)) {
+    return filepathESLintMap.get(filepath);
   }
 
   if (!eslintConfigDir) {
     filepathESLintMap.set(filepath, null);
     return null;
+  }
+
+  if (dirESLintMap.has(eslintConfigDir)) {
+    addFilepath2ConfigDirMap(eslintConfigDir, filepath);
+    const linter = dirESLintMap.get(eslintConfigDir);
+    filepathESLintMap.set(filepath, linter ?? null);
+    return linter;
   }
 
   process.chdir(eslintConfigDir);
