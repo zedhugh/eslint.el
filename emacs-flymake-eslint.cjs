@@ -12,7 +12,7 @@
  * }} Result
  */
 
-const { getESLint, closeFile } = require("./core.cjs");
+const { getESLint, closeFile } = require('./core.cjs');
 
 /**
  * @param {LintResult[]} result
@@ -43,7 +43,7 @@ const parseLintResult = (result, filepath) => {
   return list;
 };
 
-process.on("unhandledRejection", (reason) => {
+process.on('unhandledRejection', (reason) => {
   process.stderr.write(`${reason}\n`);
 });
 
@@ -73,24 +73,24 @@ const lintFile = async (code, filename) => {
   return obj;
 };
 
-process.stdin.on("data", async (data) => {
+process.stdin.on('data', async (data) => {
   const str = data.toString();
   /** @type {InteractiveData} */
   const json = JSON.parse(str);
 
   switch (json.cmd) {
-    case "lint": {
+    case 'lint': {
       const { code, filename } = json;
       const obj = await lintFile(code, filename);
       process.stdout.write(JSON.stringify(obj));
       break;
     }
-    case "close": {
+    case 'close': {
       const { filename } = json;
       filename && closeFile(filename);
       break;
     }
-    case "exit":
+    case 'exit':
       process.exit(0);
   }
 });

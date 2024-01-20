@@ -5,10 +5,10 @@
   "description": "better eslint plugin for flymake in emacs",
   "devDependencies": {
     "@eslint/js": "^8.56.0",
-    "@types/eslint": "^8.56.0",
-    "@types/node": "^20.10.5",
+    "@types/eslint": "^8.56.2",
+    "@types/node": "^20.11.5",
     "eslint": "^8.56.0",
-    "prettier": "^3.1.1",
+    "prettier": "^3.2.4",
     "typescript": "^5.3.3"
   }
 }

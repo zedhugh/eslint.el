@@ -1,18 +1,18 @@
-const childProcess = require("node:child_process");
-const path = require("node:path");
-const fs = require("node:fs");
+const childProcess = require('node:child_process');
+const path = require('node:path');
+const fs = require('node:fs');
 
 /**
  * @param {string} dir
  */
 const hasEslint = (dir) => {
-  return fs.existsSync(path.join(dir, "eslint"));
+  return fs.existsSync(path.join(dir, 'eslint'));
 };
 
 /**
  * @param {string} dir
  */
-const eslintJsFile = (dir) => path.join(dir, "eslint/bin/eslint.js");
+const eslintJsFile = (dir) => path.join(dir, 'eslint/bin/eslint.js');
 
 /**
  * @param {string} cmd
@@ -20,18 +20,18 @@ const eslintJsFile = (dir) => path.join(dir, "eslint/bin/eslint.js");
  */
 const spawnSync = (cmd, args) => {
   const result = childProcess.spawnSync(cmd, args);
-  return result.stdout.toString("utf8").trim();
+  return result.stdout.toString('utf8').trim();
 };
 
 /**
  * @param {string[]} args
  */
-const npm = (args) => spawnSync("npm", args);
+const npm = (args) => spawnSync('npm', args);
 
 /**
  * @param {string[]} args
  */
-const pnpm = (args) => spawnSync("pnpm", args);
+const pnpm = (args) => spawnSync('pnpm', args);
 
 /**
  * @enum {number}
@@ -47,22 +47,22 @@ const SCOPE = {
  */
 const getESLintInstallScope = () => {
   try {
-    const project = pnpm(["root"]);
+    const project = pnpm(['root']);
     if (hasEslint(project)) return SCOPE.PROJECT;
   } catch (_err) {}
 
   try {
-    const root = pnpm(["root", "-g"]);
+    const root = pnpm(['root', '-g']);
     if (hasEslint(root)) return SCOPE.GLOBAL;
   } catch (_err) {}
 
   try {
-    const project = npm(["root"]);
+    const project = npm(['root']);
     if (hasEslint(project)) return SCOPE.PROJECT;
   } catch (_err) {}
 
   try {
-    const root = npm(["root", "-g"]);
+    const root = npm(['root', '-g']);
     if (hasEslint(root)) return SCOPE.GLOBAL;
   } catch (_err) {}
 
@@ -71,22 +71,22 @@ const getESLintInstallScope = () => {
 
 const getESLintFile = () => {
   try {
-    const project = pnpm(["root"]);
+    const project = pnpm(['root']);
     if (hasEslint(project)) return eslintJsFile(project);
   } catch (_err) {}
 
   try {
-    const root = pnpm(["root", "-g"]);
+    const root = pnpm(['root', '-g']);
     if (hasEslint(root)) return eslintJsFile(root);
   } catch (_err) {}
 
   try {
-    const project = npm(["root"]);
+    const project = npm(['root']);
     if (hasEslint(project)) return eslintJsFile(project);
   } catch (_err) {}
 
   try {
-    const root = npm(["root", "-g"]);
+    const root = npm(['root', '-g']);
     if (hasEslint(root)) return eslintJsFile(root);
   } catch (_err) {}
 
@@ -103,7 +103,7 @@ const getESLintFile = () => {
 const eslint = (args) => {
   const r = childProcess.execSync(getESLintFile(), args);
   console.log(0, r.toString());
-  const d = r.stdout.toString("utf8");
+  const d = r.stdout.toString('utf8');
   return d.trim();
 };
 
@@ -111,7 +111,7 @@ const eslint = (args) => {
  * @param filepath {string}
  */
 const eslintFile = (filepath) => {
-  const jsonStr = eslint(["-f", "json", filepath]);
+  const jsonStr = eslint(['-f', 'json', filepath]);
   console.log(1, jsonStr);
   /** @type {LintResult[]} */
   const json = JSON.parse(jsonStr);

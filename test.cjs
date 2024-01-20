@@ -1,8 +1,8 @@
-const path = require("node:path");
+const path = require('node:path');
 
 const apiJs = path.join(
   __dirname,
-  "node_modules/eslint/lib/unsupported-api.js",
+  'node_modules/eslint/lib/unsupported-api.js',
 );
 
 const { FlatESLint, shouldUseFlatConfig, LegacyESLint } = require(apiJs);
@@ -15,7 +15,7 @@ const legacyEslint = new LegacyESLint();
  */
 const lintFile = async (filepath) => {
   console.log(filepath);
-  const label = "cost";
+  const label = 'cost';
   console.time(label);
   const dir = path.dirname(filepath);
   process.chdir(dir);
@@ -28,11 +28,11 @@ const lintFile = async (filepath) => {
 
 (async () => {
   for (const file of [
-    "./emacs-flymake-eslint.cjs",
-    "./eslint.config.js",
-    "./test/emacs-flymake-eslint.cjs",
-    "./test/eslint.config.js",
-    "./test.cjs",
+    './emacs-flymake-eslint.cjs',
+    './eslint.config.js',
+    './test/emacs-flymake-eslint.cjs',
+    './test/eslint.config.js',
+    './test.cjs',
   ]) {
     await lintFile(path.join(__dirname, file));
   }

@@ -1,7 +1,7 @@
-"use strict";
+'use strict';
 
-const { parentPort } = require("node:worker_threads");
-const { repeat } = require("./mod.cjs");
+const { parentPort } = require('node:worker_threads');
+const { repeat } = require('./mod.cjs');
 
 /**
  * @param {number} count
@@ -10,12 +10,12 @@ const cb = (count) => {
   parentPort?.postMessage(count);
 };
 
-parentPort?.on("message", (value) => {
-  console.log("msg:", value);
+parentPort?.on('message', (value) => {
+  console.log('msg:', value);
 
   parentPort?.postMessage(`hello ${value}`);
 
-  if (typeof value !== "string") return;
+  if (typeof value !== 'string') return;
 
   const result = value.match(/(\d+)\/(\d+)/);
   if (!result) return;

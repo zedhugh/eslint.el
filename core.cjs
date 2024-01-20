@@ -3,21 +3,21 @@
  * @typedef {import("eslint").ESLint} ESLint
  */
 
-const childProcess = require("node:child_process");
-const path = require("node:path");
-const fs = require("node:fs");
+const childProcess = require('node:child_process');
+const path = require('node:path');
+const fs = require('node:fs');
 
-const pkgJson = "package.json";
-const nodeModules = "node_modules";
+const pkgJson = 'package.json';
+const nodeModules = 'node_modules';
 const eslintConfigFiles = [
-  "eslint.config.js",
-  ".eslintrc.js",
-  ".eslintrc.cjs",
-  ".eslintrc.yaml",
-  ".eslintrc.yml",
-  ".eslintrc.json",
+  'eslint.config.js',
+  '.eslintrc.js',
+  '.eslintrc.cjs',
+  '.eslintrc.yaml',
+  '.eslintrc.yml',
+  '.eslintrc.json',
 ];
-const eslintConfigField = "eslintConfig";
+const eslintConfigField = 'eslintConfig';
 
 /**
  * @param {string} dir
@@ -42,7 +42,7 @@ const filepathInNodeModulesDir = (filepath) => {
  */
 const findRootDir = (filepath) => {
   let dir = path.dirname(filepath);
-  let prevDir = "";
+  let prevDir = '';
   for (;;) {
     if (dirContainPackageJson(dir) && !filepathInNodeModulesDir(dir)) {
       return dir;
@@ -63,7 +63,7 @@ const parseDirPkgJson = (dir) => {
   if (!fs.existsSync(pkgJsonPath)) return null;
 
   try {
-    const jsonStr = fs.readFileSync(pkgJsonPath, { encoding: "utf8" });
+    const jsonStr = fs.readFileSync(pkgJsonPath, { encoding: 'utf8' });
     /**
      * @type {Record<string, unknown>}
      */
@@ -103,7 +103,7 @@ const hasFieldInPkgJson = (field, dir) => {
 const findEslintConfigDir = (filepath) => {
   const rootDir = findRootDir(filepath);
   let dir = path.dirname(filepath);
-  let prevDir = "";
+  let prevDir = '';
   for (;;) {
     if (filesExistInDir(eslintConfigFiles, dir)) return dir;
 
@@ -134,26 +134,26 @@ const spawnSync = (cmd, args, dir) => {
   if (oldWorkDir !== process.cwd()) {
     process.chdir(oldWorkDir);
   }
-  return result.stdout.toString("utf8").trim();
+  return result.stdout.toString('utf8').trim();
 };
 
 /**
  * @param {string[]} args
  * @param {string=} dir
  */
-const npm = (args, dir) => spawnSync("npm", args, dir);
+const npm = (args, dir) => spawnSync('npm', args, dir);
 
 /**
  * @param {string[]} args
  * @param {string=} dir
  */
-const pnpm = (args, dir) => spawnSync("pnpm", args, dir);
+const pnpm = (args, dir) => spawnSync('pnpm', args, dir);
 
 /**
  * @param {string} root
  */
 const hasEslint = (root) => {
-  const eslintDir = path.join(root, "eslint");
+  const eslintDir = path.join(root, 'eslint');
   return fs.existsSync(eslintDir) && fs.statSync(eslintDir).isDirectory();
 };
 
@@ -161,11 +161,11 @@ const hasEslint = (root) => {
  * @param {string} root
  */
 const importEslint = async (root) => {
-  const eslintJS = path.join(root, "eslint/lib/eslint/eslint.js");
-  const flatEslintJS = path.join(root, "eslint/lib/eslint/flat-eslint.js");
+  const eslintJS = path.join(root, 'eslint/lib/eslint/eslint.js');
+  const flatEslintJS = path.join(root, 'eslint/lib/eslint/flat-eslint.js');
 
   if (!fs.existsSync(eslintJS) && !fs.existsSync(flatEslintJS)) {
-    throw new Error("no eslint installed or not supported eslint version");
+    throw new Error('no eslint installed or not supported eslint version');
   }
 
   /**
@@ -187,11 +187,11 @@ const importEslint = async (root) => {
   const { FlatESLint, ...mod } = require(flatEslintJS);
   const { shouldUseFlatConfig, findFlatConfigFile } = mod;
   let usingFlatConfig = false;
-  if (typeof shouldUseFlatConfig === "function") {
+  if (typeof shouldUseFlatConfig === 'function') {
     usingFlatConfig = await shouldUseFlatConfig();
   }
 
-  if (typeof findFlatConfigFile === "function") {
+  if (typeof findFlatConfigFile === 'function') {
     usingFlatConfig = !!(await findFlatConfigFile(process.cwd()));
   }
 
@@ -201,22 +201,22 @@ const importEslint = async (root) => {
 
 const getESLintInstallDir = () => {
   try {
-    const root = pnpm(["root"]);
+    const root = pnpm(['root']);
     if (hasEslint(root)) return root;
   } catch (_err) {}
 
   try {
-    const root = npm(["root"]);
+    const root = npm(['root']);
     if (hasEslint(root)) return root;
   } catch (_err) {}
 
   try {
-    const root = pnpm(["root", "-g"]);
+    const root = pnpm(['root', '-g']);
     if (hasEslint(root)) return root;
   } catch (_err) {}
 
   try {
-    const root = npm(["root", "-g"]);
+    const root = npm(['root', '-g']);
     if (hasEslint(root)) return root;
   } catch (_err) {}
 

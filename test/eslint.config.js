@@ -1,4 +1,4 @@
 /**
  * @type {import("eslint").Linter.Config[]}
  */
-module.exports = [{ rules: { "no-console": "warn" } }];
+module.exports = [{ rules: { 'no-console': 'warn' } }];

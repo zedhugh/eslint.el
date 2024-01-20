@@ -1,4 +1,4 @@
-import type { ESLint, Linter } from "eslint";
+import type { ESLint, Linter } from 'eslint';
 
 interface ESLintMessage {
   ruleId: string;
@@ -15,25 +15,25 @@ interface ESLintMessage {
   endColumn?: number;
 }
 
-type Command = "lint" | "close" | "exit";
+type Command = 'lint' | 'close' | 'exit';
 
 interface BaseData {
   cmd: Command;
 }
 
 interface LintData extends BaseData {
-  cmd: "lint";
+  cmd: 'lint';
   filename: string;
   code: string;
 }
 
 interface CloseFileData extends BaseData {
-  cmd: "close";
+  cmd: 'close';
   filename: string;
 }
 
 interface ExitData extends BaseData {
-  cmd: "exit";
+  cmd: 'exit';
 }
 
 type InteractiveData = LintData | CloseFileData | ExitData;
