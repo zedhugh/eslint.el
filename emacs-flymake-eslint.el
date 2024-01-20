@@ -54,7 +54,7 @@ All buffers use the same process.")
 (defun emacs-flymake-eslint--filter (stdout-output stderr-buffer)
   (condition-case err
       (let* ((obj (json-parse-string stdout-output :object-type 'plist))
-             (filepath  (plist-get obj :filename))
+             (filepath  (plist-get obj :file))
              (buffer (find-buffer-visiting filepath))
              cost messages report-fn diags)
         (when (and filepath buffer
@@ -77,7 +77,7 @@ All buffers use the same process.")
 (defun emacs-flymake-eslint--create-process ()
   (let ((node (emacs-flymake-eslint--detect-node-cmd))
         (js-file (expand-file-name
-                  "emacs-flymake-eslint.cjs"
+                  "./out/index.js"
                   emacs-flymake-eslint--home))
         buffer stderr)
     (when node
@@ -118,7 +118,7 @@ All buffers use the same process.")
     (when (process-live-p process)
       (process-send-string
        process
-       (json-serialize (list :cmd "lint" :filename filepath :code code))))))
+       (json-serialize (list :cmd "lint" :file filepath :code code))))))
 
 (defun emacs-flymake-eslint-kill-buffer-hook ()
   (let ((filepath (buffer-file-name))
@@ -130,7 +130,7 @@ All buffers use the same process.")
                        flymake-diagnostic-functions))
       (process-send-string
        process
-       (json-serialize (list :cmd "close" :filename filepath))))))
+       (json-serialize (list :cmd "close" :file filepath))))))
 
 (defun emacs-flymake-eslint--checker (report-fn &rest _ignore)
   (let ((filepath (buffer-file-name)))
@@ -153,6 +153,11 @@ All buffers use the same process.")
   (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker t)
   (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)
   (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook t))
+
+(defun emacs-flymake-eslint-log ()
+  (when (process-live-p emacs-flymake-eslint--process)
+    (process-send-string emacs-flymake-eslint--process
+      (json-serialize (list :cmd "log")))))
 
 
 (provide 'emacs-flymake-eslint)
