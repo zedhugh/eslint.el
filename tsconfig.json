@@ -27,7 +27,7 @@
     "forceConsistentCasingInFileNames": true,
     "downlevelIteration": true,
     "useDefineForClassFields": true,
-    "outDir": "./out"
+    "outDir": "./dist"
   },
   "include": ["./src/**/*"]
 }

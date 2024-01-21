@@ -76,9 +76,7 @@ All buffers use the same process.")
 
 (defun emacs-flymake-eslint--create-process ()
   (let ((node (emacs-flymake-eslint--detect-node-cmd))
-        (js-file (expand-file-name
-                  "./out/index.js"
-                  emacs-flymake-eslint--home))
+        (js-file (expand-file-name "./index.js" emacs-flymake-eslint--home))
         buffer stderr)
     (when node
       (setq buffer (generate-new-buffer " *emacs-flymake-eslint output*")
@@ -157,7 +155,7 @@ All buffers use the same process.")
 (defun emacs-flymake-eslint-log ()
   (when (process-live-p emacs-flymake-eslint--process)
     (process-send-string emacs-flymake-eslint--process
-      (json-serialize (list :cmd "log")))))
+                         (json-serialize (list :cmd "log")))))
 
 
 (provide 'emacs-flymake-eslint)
