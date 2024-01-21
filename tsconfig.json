@@ -27,7 +27,7 @@
     "forceConsistentCasingInFileNames": true,
     "downlevelIteration": true,
     "useDefineForClassFields": true,
-    "outDir": "./dist"
+    "outDir": "./flymake-eslint"
   },
   "include": ["./src/**/*"]
 }
