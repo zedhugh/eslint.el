@@ -30,7 +30,8 @@ const getFilepathWorker = (filepath) => {
     }
     const workerFile = node_path_1.default.join(__dirname, './worker.js');
     process.chdir(node_path_1.default.dirname(config));
-    const worker = new node_worker_threads_1.Worker(workerFile, { workerData: root });
+    const workerConfig = { root, config };
+    const worker = new node_worker_threads_1.Worker(workerFile, { workerData: workerConfig });
     configWorkerMap.set(config, worker);
     return worker;
 };

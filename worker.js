@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_worker_threads_1 = require("node:worker_threads");
 const message_1 = require("./message");
 const utils_1 = require("./utils");
-const root = node_worker_threads_1.workerData;
+const { root, config } = node_worker_threads_1.workerData;
 const waitingFileCodeMap = new Map();
 let eslintInstance = null;
 const getESLint = async () => {
@@ -15,6 +15,9 @@ const getESLint = async () => {
 const onMessage = async (input) => {
     const { code, filepath } = input;
     waitingFileCodeMap.set(filepath, code);
+    if (filepath === config) {
+        eslintInstance = null;
+    }
     const eslint = await getESLint();
     waitingFileCodeMap.forEach(async (code, filepath) => {
         waitingFileCodeMap.delete(filepath);
