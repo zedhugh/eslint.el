@@ -35,6 +35,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: emacs-flymake-eslint
+      - run: ls -lha
       - name: deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
