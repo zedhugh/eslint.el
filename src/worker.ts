@@ -2,12 +2,13 @@ import { parentPort, workerData } from 'node:worker_threads';
 import type { ESLint } from 'eslint';
 import {
   parseLintResult,
+  type WorkerConfig,
   type WorkerInput,
   type WorkerOutput,
 } from './message';
 import { importEslint } from './utils';
 
-const root: string = workerData;
+const { root, config } = workerData as WorkerConfig;
 const waitingFileCodeMap = new Map<string, string>();
 
 let eslintInstance: ESLint | null = null;
@@ -21,6 +22,10 @@ const getESLint = async () => {
 const onMessage = async (input: WorkerInput) => {
   const { code, filepath } = input;
   waitingFileCodeMap.set(filepath, code);
+
+  if (filepath === config) {
+    eslintInstance = null;
+  }
 
   const eslint = await getESLint();
   waitingFileCodeMap.forEach(async (code, filepath) => {

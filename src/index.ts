@@ -6,6 +6,7 @@ import {
   ESLintMessage,
   InteractiveData,
   Result,
+  WorkerConfig,
   WorkerInput,
   WorkerOutput,
 } from './message';
@@ -38,7 +39,8 @@ const getFilepathWorker = (filepath: string) => {
 
   const workerFile = path.join(__dirname, './worker.js');
   process.chdir(path.dirname(config));
-  const worker = new Worker(workerFile, { workerData: root });
+  const workerConfig: WorkerConfig = { root, config };
+  const worker = new Worker(workerFile, { workerData: workerConfig });
   configWorkerMap.set(config, worker);
 
   return worker;

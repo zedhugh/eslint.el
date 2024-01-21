@@ -63,6 +63,11 @@ export interface WorkerOutput {
   messages: ESLintMessage[];
 }
 
+export interface WorkerConfig {
+  root: string;
+  config: string;
+}
+
 export const parseLintResult = (
   result: ESLint.LintResult[],
   filepath: string,
