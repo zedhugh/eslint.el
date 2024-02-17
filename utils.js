@@ -31,6 +31,7 @@ const dirContainPackageJson = (dir) => {
 const filepathInNodeModulesDir = (filepath) => {
     return filepath.includes(config_1.nodeModules);
 };
+// @ts-ignore
 const findRootDir = (filepath) => {
     let dir = node_path_1.default.dirname(filepath);
     let prevDir = '';
@@ -72,18 +73,15 @@ const filesExistInDir = (files, dir) => {
     return null;
 };
 const findEslintConfigFile = (filepath) => {
-    const rootDir = findRootDir(filepath);
+    // const rootDir = findRootDir(filepath);
     let dir = node_path_1.default.dirname(filepath);
     let prevDir = '';
     for (;;) {
         let configFile = filesExistInDir(config_1.eslintConfigFiles, dir);
         if (configFile)
             return configFile;
-        if (dir === rootDir) {
-            if (hasFieldInPkgJson(config_1.eslintConfigField, dir)) {
-                return node_path_1.default.join(dir, config_1.pkgJson);
-            }
-            return null;
+        if (hasFieldInPkgJson(config_1.eslintConfigField, dir)) {
+            return node_path_1.default.join(dir, config_1.pkgJson);
         }
         if (prevDir === dir)
             return null;
