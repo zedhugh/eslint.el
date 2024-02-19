@@ -95,19 +95,18 @@ const hasEslint = (root) => {
     return node_fs_1.default.existsSync(eslintDir) && node_fs_1.default.statSync(eslintDir).isDirectory();
 };
 const getESLintInstallDir = (filepath) => {
-    const dir = filepath ? node_path_1.default.dirname(filepath) : undefined;
-    try {
-        const root = pnpm(['root'], dir);
-        if (hasEslint(root))
+    let dir = node_path_1.default.dirname(filepath);
+    let prevDir = '';
+    for (;;) {
+        const root = node_path_1.default.join(dir, config_1.nodeModules);
+        if (hasEslint(root)) {
             return root;
+        }
+        if (prevDir === dir)
+            break;
+        prevDir = dir;
+        dir = node_path_1.default.dirname(dir);
     }
-    catch (_err) { }
-    try {
-        const root = npm(['root'], dir);
-        if (hasEslint(root))
-            return root;
-    }
-    catch (_err) { }
     try {
         const root = pnpm(['root', '-g'], dir);
         if (hasEslint(root))
