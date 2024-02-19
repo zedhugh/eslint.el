@@ -106,18 +106,20 @@ const hasEslint = (root: string) => {
   return fs.existsSync(eslintDir) && fs.statSync(eslintDir).isDirectory();
 };
 
-export const getESLintInstallDir = (filepath?: string) => {
-  const dir = filepath ? path.dirname(filepath) : undefined;
+export const getESLintInstallDir = (filepath: string) => {
+  let dir = path.dirname(filepath);
+  let prevDir = '';
+  for (;;) {
+    const root = path.join(dir, nodeModules);
+    if (hasEslint(root)) {
+      return root;
+    }
 
-  try {
-    const root = pnpm(['root'], dir);
-    if (hasEslint(root)) return root;
-  } catch (_err) {}
+    if (prevDir === dir) break;
 
-  try {
-    const root = npm(['root'], dir);
-    if (hasEslint(root)) return root;
-  } catch (_err) {}
+    prevDir = dir;
+    dir = path.dirname(dir);
+  }
 
   try {
     const root = pnpm(['root', '-g'], dir);
