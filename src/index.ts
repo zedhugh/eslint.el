@@ -17,7 +17,7 @@ const configFilesMap = new Map<string, Set<string>>();
 const addConfigFile2Map = (config: string, filepath: string) => {
   const fileSet = configFilesMap.get(config);
 
-  if (fileSet) fileSet.add(config);
+  if (fileSet) fileSet.add(filepath);
   else configFilesMap.set(config, new Set([filepath]));
 };
 
