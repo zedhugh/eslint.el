@@ -5,6 +5,8 @@ exports.pkgJson = 'package.json';
 exports.nodeModules = 'node_modules';
 exports.eslintConfigFiles = [
     'eslint.config.js',
+    'eslint.config.mjs',
+    'eslint.config.cjs',
     '.eslintrc.js',
     '.eslintrc.cjs',
     '.eslintrc.yaml',
