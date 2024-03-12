@@ -4,6 +4,8 @@ export const nodeModules = 'node_modules';
 
 export const eslintConfigFiles = [
   'eslint.config.js',
+  'eslint.config.mjs',
+  'eslint.config.cjs',
   '.eslintrc.js',
   '.eslintrc.cjs',
   '.eslintrc.yaml',

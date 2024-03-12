@@ -1,7 +1,7 @@
 /**
  * @type {import("eslint").Linter.Config[]}
  */
-module.exports = [
+const config = [
   {
     rules: {
       'no-console': 'error',
@@ -10,3 +10,5 @@ module.exports = [
     },
   },
 ];
+
+export default config;
