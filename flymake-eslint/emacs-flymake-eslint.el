@@ -117,7 +117,8 @@ All buffers use the same process.")
   (let ((process (emacs-flymake-eslint--get-process))
         (code (when (bufferp buffer)
                 (with-current-buffer buffer (buffer-string)))))
-    (when (process-live-p process)
+    (when (and (stringp code)
+               (process-live-p process))
       (process-send-string
        process
        (json-serialize (list :cmd "lint" :file filepath :code code))))))
@@ -145,6 +146,14 @@ All buffers use the same process.")
     (unless (bound-and-true-p flymake-mode) (flymake-mode 1))
     (add-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker nil t)
     (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook nil t)))
+
+(defun emacs-flymake-eslint-disable ()
+  "Disable `emacs-flymake-eslint' in current buffer."
+  (interactive)
+  (when (and (bound-and-true-p flymake-mode)
+             flymake-mode
+             (emacs-flymake-eslint--detect-node-cmd))
+    (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker t)))
 
 (defun emacs-flymake-eslint-stop ()
   (when (process-live-p emacs-flymake-eslint--process)
