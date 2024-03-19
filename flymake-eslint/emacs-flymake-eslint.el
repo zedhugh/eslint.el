@@ -63,7 +63,7 @@ All buffers use the same process.")
                 messages    (plist-get obj :messages)
                 report-fn   (gethash filepath emacs-flymake-eslint--report-fn-map))
           (with-current-buffer stdout-buffer
-            (end-of-buffer)
+            (goto-char (point-max))
             (when (> (point) 1)
               (insert "-----------------------------------------\n"))
             (insert (format "file: %s\ncost: %sms\n" filepath cost)))
@@ -73,7 +73,7 @@ All buffers use the same process.")
           (when (functionp report-fn) (funcall report-fn diags))
           (remhash filepath emacs-flymake-eslint--report-fn-map)))
     (t (with-current-buffer stderr-buffer
-         (end-of-buffer)
+         (goto-char (point-max))
          (insert (format "\nerror: %s\ntype: %s, origin: %s"
                          err (type-of stdout-output) stdout-output)))
        (message "emacs-flymake-eslint error: %s" err))))
