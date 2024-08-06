@@ -9,6 +9,14 @@ const config = [
       'array-callback-return': 'error',
     },
   },
+  {
+    files: ['js/**/*'],
+    rules: {
+      'no-console': 'off',
+      'no-await-in-loop': 'warn',
+      'array-callback-return': 'error',
+    },
+  },
 ];
 
 export default config;

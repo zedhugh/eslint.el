@@ -80,7 +80,7 @@ All buffers use the same process.")
 
 (defun emacs-flymake-eslint--create-process ()
   (let ((node (emacs-flymake-eslint--detect-node-cmd))
-        (js-file (expand-file-name "./index.js" emacs-flymake-eslint--home))
+        (js-file (expand-file-name "../js/index.mjs" emacs-flymake-eslint--home))
         buffer stderr)
     (when node
       (setq buffer (generate-new-buffer " *emacs-flymake-eslint output*")
@@ -149,7 +149,8 @@ All buffers use the same process.")
   (when (emacs-flymake-eslint--detect-node-cmd)
     (unless (bound-and-true-p flymake-mode) (flymake-mode 1))
     (add-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker nil t)
-    (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook nil t)))
+    (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook nil t)
+    (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)))
 
 (defun emacs-flymake-eslint-disable ()
   "Disable `emacs-flymake-eslint' in current buffer."

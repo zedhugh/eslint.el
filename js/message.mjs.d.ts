@@ -1,4 +1,4 @@
-import type { ESLint, Linter } from 'eslint';
+import type { Linter } from 'eslint';
 
 export interface ESLintMessage {
   ruleId: string;
@@ -52,43 +52,3 @@ interface LogData extends BaseData {
 }
 
 export type InteractiveData = LintData | CloseFileData | ExitData | LogData;
-
-export interface WorkerInput {
-  code: string;
-  filepath: string;
-}
-
-export interface WorkerOutput {
-  filepath: string;
-  messages: ESLintMessage[];
-}
-
-export interface WorkerConfig {
-  root: string;
-  config: string;
-}
-
-export const parseLintResult = (
-  result: ESLint.LintResult[],
-  filepath: string,
-) => {
-  const list: ESLintMessage[] = [];
-  const fileResult = result.filter((r) => r.filePath === filepath);
-  fileResult.forEach((r) => {
-    r.messages.forEach((m) => {
-      if (!m.ruleId || !m.severity) return;
-
-      list.push({
-        ruleId: m.ruleId,
-        severity: m.severity,
-        message: m.message,
-        line: m.line,
-        column: m.column,
-        endLine: m.endLine,
-        endColumn: m.endColumn,
-      });
-    });
-  });
-
-  return list;
-};

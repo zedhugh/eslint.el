@@ -9,15 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: enable pnpm
-        run: corepack enable pnpm
-      - name: install dependencies
-        run: pnpm i
-      - name: compile ts file
-        run: pnpm run build
+      - name: prepare output directory
+        run: mkdir -p flymake-eslint
+      - name: copy files
+        run: cp -r js/ lisp/ flymake-eslint
       - name: make output tarball
         uses: actions/upload-artifact@v4
         with:
