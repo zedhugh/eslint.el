@@ -3,6 +3,13 @@
 (defconst emacs-flymake-eslint--home
   (file-name-directory (or load-file-name buffer-file-name))
   "Directory which `emacs-flymake-eslint' installed.")
+(defconst emacs-flymake-eslint--js-file
+  (expand-file-name "../js/index.mjs" emacs-flymake-eslint--home)
+  "Node program entry of `emacs-flymake-eslint'.")
+(defconst emacs-flymake-eslint--stdout-name " *emacs-flymake-eslint output*"
+  "Standard output buffer name of `emacs-flymake-eslint'.")
+(defconst emacs-flymake-eslint--stderr-name " *emacs-flymake-eslint stderr*"
+  "Standard error buffer name of `emacs-flymake-eslint'.")
 
 (defvar emacs-flymake-eslint--process nil
   "Linter process.
@@ -10,6 +17,18 @@ All buffers use the same process.")
 
 (defvar emacs-flymake-eslint--report-fn-map (make-hash-table :test #'equal)
   "File path and flymake report function map.")
+
+(defun emacs-flymake-eslint--buffer (buffer-name)
+  (or (get-buffer buffer-name) (generate-new-buffer buffer-name)))
+(defun emacs-flymake-eslint--stdout-buffer ()
+  (emacs-flymake-eslint--buffer emacs-flymake-eslint--stdout-name))
+(defun emacs-flymake-eslint--stderr-buffer ()
+  (emacs-flymake-eslint--buffer emacs-flymake-eslint--stderr-name))
+
+(defun emacs-flymake-eslint--log-process-exit (buffer)
+  (with-current-buffer buffer
+    (goto-char (point-max))
+    (insert "====================== process exit ======================\n")))
 
 (defun emacs-flymake-eslint--kill-process ()
   (when (process-live-p emacs-flymake-eslint--process)
@@ -80,11 +99,10 @@ All buffers use the same process.")
 
 (defun emacs-flymake-eslint--create-process ()
   (let ((node (emacs-flymake-eslint--detect-node-cmd))
-        (js-file (expand-file-name "../js/index.mjs" emacs-flymake-eslint--home))
         buffer stderr)
-    (when node
-      (setq buffer (generate-new-buffer " *emacs-flymake-eslint output*")
-            stderr (generate-new-buffer " *emacs-flymake-eslint stderr*"))
+    (when (and node (file-exists-p emacs-flymake-eslint--js-file))
+      (setq buffer (emacs-flymake-eslint--stdout-buffer)
+            stderr (emacs-flymake-eslint--stderr-buffer))
       (setq emacs-flymake-eslint--process
             (make-process
              :name "emacs-flymake-eslint"
@@ -92,13 +110,14 @@ All buffers use the same process.")
              :noquery t
              :buffer buffer
              :stderr stderr
-             :command (list "node" js-file)
+             :command (list "node" emacs-flymake-eslint--js-file)
              :filter (lambda (process output)
                        (emacs-flymake-eslint--filter output buffer stderr))
              :sentinel (lambda (process event)
                          (when (eq 'exit (process-status process))
                            (when (bufferp buffer) (kill-buffer buffer))
-                           (when (bufferp stderr) (kill-buffer stderr)))
+                           (when (bufferp stderr)
+                             (emacs-flymake-eslint--log-process-exit stderr)))
                          (when (hash-table-p emacs-flymake-eslint--report-fn-map)
                            (clrhash emacs-flymake-eslint--report-fn-map))
                          )
@@ -158,6 +177,7 @@ All buffers use the same process.")
   (when (and (bound-and-true-p flymake-mode)
              flymake-mode
              (emacs-flymake-eslint--detect-node-cmd))
+    (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker)
     (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker t)))
 
 (defun emacs-flymake-eslint-stop ()
@@ -167,6 +187,8 @@ All buffers use the same process.")
     (process-send-string
      emacs-flymake-eslint--process
      (json-serialize (list :cmd "exit"))))
+  (let ((buffer (get-buffer emacs-flymake-eslint--stderr-name)))
+    (when (bufferp buffer) (kill-buffer buffer)))
   (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker)
   (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker t)
   (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)
