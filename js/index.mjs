@@ -114,15 +114,33 @@ const sendResultToEmacs = (result) => {
   console.log(JSON.stringify(result));
 };
 
+let tmpStr = '';
+let time = 0;
 process.stdin.on('data', async (data) => {
-  const start = performance.now();
-  const str = data.toString('utf8');
-  /** @type {InteractiveData} */
-  const json = JSON.parse(str);
+  const start = time || performance.now();
+  const chunk = data.toString('utf8');
+  /** @type {InteractiveData | null} */
+  const json = (() => {
+    try {
+      if (!chunk.endsWith('}') && !chunk.endsWith(']')) {
+        throw new SyntaxError('JSON data is incomplete.');
+      }
+      const str = tmpStr + chunk;
+      const obj = JSON.parse(str);
+      tmpStr = '';
+      time = 0;
+      return obj;
+    } catch (err) {
+      tmpStr += chunk;
+      time = time || start;
+      return null;
+    }
+  })();
 
-  switch (json.cmd) {
+  switch (json?.cmd) {
     case Command.Lint: {
       const { file, code } = json;
+      console.error(json.cmd, file);
       const result = await lintFile(file, code);
       sendResultToEmacs({
         file,
