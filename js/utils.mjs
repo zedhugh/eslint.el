@@ -139,6 +139,11 @@ const hasEslint = (root) => {
 };
 
 /**
+ * @param {string} root
+ */
+const eslintDir = (root) => path.join(root, 'eslint');
+
+/**
  * @param {string} filepath
  */
 export const getESLintInstallDir = (filepath) => {
@@ -147,7 +152,7 @@ export const getESLintInstallDir = (filepath) => {
   for (;;) {
     const root = path.join(dir, nodeModules);
     if (hasEslint(root)) {
-      return root;
+      return eslintDir(root);
     }
 
     if (prevDir === dir) break;
@@ -158,12 +163,12 @@ export const getESLintInstallDir = (filepath) => {
 
   try {
     const root = pnpm(['root', '-g'], dir);
-    if (hasEslint(root)) return root;
+    if (hasEslint(root)) return eslintDir(root);
   } catch (_err) {}
 
   try {
     const root = npm(['root', '-g'], dir);
-    if (hasEslint(root)) return root;
+    if (hasEslint(root)) return eslintDir(root);
   } catch (_err) {}
 
   return null;

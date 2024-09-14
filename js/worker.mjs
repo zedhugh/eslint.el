@@ -1,5 +1,10 @@
+import path from 'node:path';
 import { parentPort, workerData } from 'node:worker_threads';
+import { pkgJson } from './config.mjs';
 import { parseLintResult } from './message.mjs';
+
+/** @type {WorkerConfig} */
+const { root, config } = workerData;
 
 /**
  * @typedef {import("eslint").ESLint} ESLint
@@ -11,11 +16,21 @@ import { parseLintResult } from './message.mjs';
  */
 
 const loadESLint = async () => {
-  const { ESLint } = await import('eslint');
+  /** @type {{default: typeof import("eslint/package.json")}} */
+  const json = await import(path.join(root, pkgJson), {
+    with: { type: 'json' },
+  }).then((obj) => obj.default || obj);
+  /** @type {string} */
+  const apiJs = json.exports?.['.'] || json.main;
+  /** @type {string | undefined} */
+  const riskJs =
+    json.exports?.['./use-at-your-own-risk'] ||
+    json.exports?.['use-at-your-own-risk'];
+  const { ESLint } = await import(path.join(root, apiJs));
   /** @type {typeof import("eslint/use-at-your-own-risk")} */
   const { FlatESLint, LegacyESLint } = await (async () => {
     try {
-      const mod = await import('eslint/use-at-your-own-risk');
+      const mod = await import(path.join(root, riskJs));
       return mod.default || mod;
     } catch (_err) {
       return {};
@@ -30,8 +45,6 @@ const loadESLint = async () => {
   return (await flat.findConfigFile?.()) ? flat : legacy;
 };
 
-/** @type {WorkerConfig} */
-const { root, config } = workerData;
 /** @type {Map<string, string>} */
 const waitingFileCodeMap = new Map();
 
