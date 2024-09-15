@@ -5,8 +5,10 @@ import {
   eslintConfigField,
   eslintConfigFiles,
   nodeModules,
+  packageManagerLockFiles,
   pkgJson,
 } from './config.mjs';
+import { ReloadReason } from './message.mjs';
 
 /**
  * @param {string} cmd
@@ -49,7 +51,9 @@ const dirContainPackageJson = (dir) => {
 /**
  * @param {string} filepath
  */
-const filepathInNodeModulesDir = (filepath) => filepath.includes(nodeModules);
+const filepathInNodeModulesDir = (filepath) => {
+  return filepath.split(path.sep).includes(nodeModules);
+};
 
 /**
  * @param {string} filepath
@@ -172,4 +176,21 @@ export const getESLintInstallDir = (filepath) => {
   } catch (_err) {}
 
   return null;
+};
+
+/**
+ * @param {string} filepath
+ */
+export const needReloadESLintInstance = (filepath) => {
+  if (filepathInNodeModulesDir(filepath)) return false;
+
+  const filename = path.basename(filepath);
+  if (filename === pkgJson || packageManagerLockFiles.includes(filename)) {
+    return ReloadReason.DepsChange;
+  }
+  if (eslintConfigFiles.includes(filename)) {
+    return ReloadReason.ConfigChange;
+  }
+
+  return false;
 };

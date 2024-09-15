@@ -3,9 +3,6 @@ import { parentPort, workerData } from 'node:worker_threads';
 import { pkgJson } from './config.mjs';
 import { parseLintResult } from './message.mjs';
 
-/** @type {WorkerConfig} */
-const { root, config } = workerData;
-
 /**
  * @typedef {import("eslint").ESLint} ESLint
  * @typedef {import("eslint/use-at-your-own-risk").FlatESLint} FlatESLint
@@ -15,7 +12,10 @@ const { root, config } = workerData;
  * @typedef {import("./worker").WorkerOutput} WorkerOutput
  */
 
-const loadESLint = async () => {
+/**
+ * @param {string} root
+ */
+const loadESLint = async (root) => {
   /** @type {{default: typeof import("eslint/package.json")}} */
   const json = await import(path.join(root, pkgJson), {
     with: { type: 'json' },
@@ -26,6 +26,7 @@ const loadESLint = async () => {
   const riskJs =
     json.exports?.['./use-at-your-own-risk'] ||
     json.exports?.['use-at-your-own-risk'];
+  /** @type {typeof import("eslint")} */
   const { ESLint } = await import(path.join(root, apiJs));
   /** @type {typeof import("eslint/use-at-your-own-risk")} */
   const { FlatESLint, LegacyESLint } = await (async () => {
@@ -48,14 +49,10 @@ const loadESLint = async () => {
 /** @type {Map<string, string>} */
 const waitingFileCodeMap = new Map();
 
-/** @type {ESLint | LegacyESLint | null} */
-let eslintInstance = null;
-const getESLint = async () => {
-  if (eslintInstance) return eslintInstance;
+/** @type {WorkerConfig} */
+const { root } = workerData;
 
-  eslintInstance = await loadESLint();
-  return eslintInstance;
-};
+const eslintInstancePromise = loadESLint(root);
 
 /**
  * @param {WorkerInput} input
@@ -64,11 +61,7 @@ const onMessage = async (input) => {
   const { code, filepath } = input;
   waitingFileCodeMap.set(filepath, code);
 
-  if (filepath === config) {
-    eslintInstance = null;
-  }
-
-  const eslint = await getESLint();
+  const eslint = await eslintInstancePromise;
   waitingFileCodeMap.forEach(async (code, filepath) => {
     waitingFileCodeMap.delete(filepath);
     const result = await eslint.lintText(code, { filePath: filepath });

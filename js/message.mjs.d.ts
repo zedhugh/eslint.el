@@ -21,11 +21,20 @@ export interface Result {
   messages?: ESLintMessage[];
 }
 
+/**
+ * Reason for reload ESLint Worker
+ */
+export const enum ReloadReason {
+  DepsChange = 1,
+  ConfigChange = 2,
+}
+
 export const enum Command {
   Lint = 'lint',
   Close = 'close',
   Exit = 'exit',
   Log = 'log',
+  Save = 'save',
 }
 
 interface BaseData {
@@ -51,4 +60,14 @@ interface LogData extends BaseData {
   cmd: Command.Log;
 }
 
-export type InteractiveData = LintData | CloseFileData | ExitData | LogData;
+interface SaveData extends BaseData {
+  cmd: Command.Save;
+  file: string;
+}
+
+export type InteractiveData =
+  | LintData
+  | CloseFileData
+  | ExitData
+  | LogData
+  | SaveData;
