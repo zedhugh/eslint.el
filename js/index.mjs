@@ -1,4 +1,5 @@
 import path from 'node:path';
+import readline from 'node:readline';
 import { Worker } from 'node:worker_threads';
 import {
   findEslintConfigFile,
@@ -195,28 +196,13 @@ const sendResultToEmacs = (result) => {
   console.log(JSON.stringify(result));
 };
 
-let tmpStr = '';
-let time = 0;
-process.stdin.on('data', async (data) => {
-  const start = time || performance.now();
-  const chunk = data.toString('utf8');
-  /** @type {InteractiveData | null} */
-  const json = (() => {
-    try {
-      if (!chunk.endsWith('}') && !chunk.endsWith(']')) {
-        throw new SyntaxError('JSON data is incomplete.');
-      }
-      const str = tmpStr + chunk;
-      const obj = JSON.parse(str);
-      tmpStr = '';
-      time = 0;
-      return obj;
-    } catch (err) {
-      tmpStr += chunk;
-      time = time || start;
-      return null;
-    }
-  })();
+/**
+ * @param {string} str
+ */
+const handler = async (str) => {
+  const start = performance.now();
+  /** @type {InteractiveData} */
+  const json = JSON.parse(str);
 
   switch (json?.cmd) {
     case Command.Lint: {
@@ -249,6 +235,23 @@ process.stdin.on('data', async (data) => {
       json.file && savedFile(json.file);
       break;
   }
+};
+
+/**
+ * Due to the subprocess interaction mechanism of Emacs, a piece of data sent
+ * by Emacs to the subprocess may be divided into multiple pieces of data and
+ * sent separately.
+ * Using readline can avoid this problem, but it is necessary to ensure that
+ * each data sent by Emacs has only one newline character, and the newline
+ * character is at the end of the data.
+ */
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.on('line', (line) => {
+  handler(line);
 });
 
 process.on('unhandledRejection', (reason) => {
