@@ -2,7 +2,7 @@ export const pkgJson = 'package.json';
 
 export const nodeModules = 'node_modules';
 
-export const eslintConfigFiles = [
+export const eslintConfigFiles = Object.freeze([
   'eslint.config.js',
   'eslint.config.mjs',
   'eslint.config.cjs',
@@ -11,6 +11,12 @@ export const eslintConfigFiles = [
   '.eslintrc.yaml',
   '.eslintrc.yml',
   '.eslintrc.json',
-];
+]);
 
 export const eslintConfigField = 'eslintConfig';
+
+export const packageManagerLockFiles = Object.freeze([
+  'package-lock.json',
+  'pnpm-lock.yaml',
+  'yarn.lock',
+]);

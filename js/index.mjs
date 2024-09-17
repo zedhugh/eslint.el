@@ -1,7 +1,12 @@
 import path from 'node:path';
+import readline from 'node:readline';
 import { Worker } from 'node:worker_threads';
-import { findEslintConfigFile, getESLintInstallDir } from './utils.mjs';
-import { Command } from './message.mjs';
+import {
+  findEslintConfigFile,
+  getESLintInstallDir,
+  needReloadESLintInstance,
+} from './utils.mjs';
+import { Command, ReloadReason } from './message.mjs';
 
 /**
  * @typedef {import("./message.mjs").ESLintMessage} ESLintMessage
@@ -32,6 +37,26 @@ const addConfigFile2Map = (config, filepath) => {
 };
 
 /**
+ * @param {string} config
+ * @param {string=} filepath
+ */
+const assignESLintWorker = (config, filepath) => {
+  const root = getESLintInstallDir(filepath || config);
+  if (!root) {
+    configWorkerMap.set(config, null);
+    return null;
+  }
+
+  const workerFile = path.join(import.meta.dirname, './worker.mjs');
+  process.chdir(path.dirname(config));
+  /** @type {WorkerConfig} */
+  const workerConfig = { root, config };
+  const worker = new Worker(workerFile, { workerData: workerConfig });
+  configWorkerMap.set(config, worker);
+  return worker;
+};
+
+/**
  * @param {string} filepath
  */
 const getFilepathWorker = (filepath) => {
@@ -44,20 +69,7 @@ const getFilepathWorker = (filepath) => {
     return configWorkerMap.get(config) || null;
   }
 
-  const root = getESLintInstallDir(filepath);
-  if (!root) {
-    configWorkerMap.set(config, null);
-    return null;
-  }
-
-  const workerFile = path.join(import.meta.dirname, './worker.mjs');
-  process.chdir(path.dirname(config));
-  /** @type {WorkerConfig} */
-  const workerConfig = { root, config };
-  const worker = new Worker(workerFile, { workerData: workerConfig });
-  configWorkerMap.set(config, worker);
-
-  return worker;
+  return assignESLintWorker(config, filepath);
 };
 
 /**
@@ -90,9 +102,24 @@ const lintFile = async (filepath, code) => {
 };
 
 /**
+ * @param {string} config
+ */
+const terminateAndRemoveWorker = (config) => {
+  const worker = configWorkerMap.get(config);
+  worker?.terminate();
+  configWorkerMap.delete(config);
+};
+
+const exitProcessIfNeeded = () => {
+  if (configWorkerMap.size) return;
+
+  process.exit(0);
+};
+
+/**
  * @param {string} filepath
  */
-const closeFile = async (filepath) => {
+const closeFile = (filepath) => {
   const config = findEslintConfigFile(filepath);
   if (!config) return;
 
@@ -101,10 +128,65 @@ const closeFile = async (filepath) => {
 
   if (fileSet?.size) return;
 
-  const worker = configWorkerMap.get(config);
-  await worker?.terminate();
-  configWorkerMap.delete(config);
-  if (!configWorkerMap.size) process.exit(0);
+  terminateAndRemoveWorker(config);
+  exitProcessIfNeeded();
+};
+
+/**
+ * @param {string} dir
+ */
+const reloadESLintWorkers = (dir) => {
+  configWorkerMap.forEach((oldWorker, config) => {
+    if (!config.startsWith(dir)) return;
+
+    assignESLintWorker(config);
+    oldWorker?.terminate();
+  });
+};
+
+/**
+ * @param {string} config
+ */
+const reassignESLintWorkers = (config) => {
+  const notNeedChangeConfigFilesMap = configWorkerMap.has(config);
+  const oldWorker = configWorkerMap.get(config);
+  assignESLintWorker(config);
+  oldWorker?.terminate();
+
+  if (notNeedChangeConfigFilesMap) return;
+
+  /** @type {[config: string, filepath: string][]} */
+  const configFilePairNeedChange = [];
+  configFilesMap.forEach((files, oldConf) => {
+    /** @type {string[]} */
+    const deleteFiles = [];
+    files.forEach((file) => {
+      const conf = findEslintConfigFile(file);
+      if (conf === oldConf) return;
+
+      deleteFiles.push(file);
+      configFilePairNeedChange.push([conf, file]);
+    });
+    deleteFiles.forEach((file) => files.delete(file));
+  });
+  addConfigFile2Map;
+};
+
+/**
+ * @param {string} filepath
+ */
+const savedFile = (filepath) => {
+  const reason = needReloadESLintInstance(filepath);
+  if (!reason) return;
+
+  switch (reason) {
+    case ReloadReason.DepsChange:
+      reloadESLintWorkers(path.dirname(filepath));
+      break;
+    case ReloadReason.ConfigChange:
+      reassignESLintWorkers(filepath);
+      break;
+  }
 };
 
 /**
@@ -114,28 +196,13 @@ const sendResultToEmacs = (result) => {
   console.log(JSON.stringify(result));
 };
 
-let tmpStr = '';
-let time = 0;
-process.stdin.on('data', async (data) => {
-  const start = time || performance.now();
-  const chunk = data.toString('utf8');
-  /** @type {InteractiveData | null} */
-  const json = (() => {
-    try {
-      if (!chunk.endsWith('}') && !chunk.endsWith(']')) {
-        throw new SyntaxError('JSON data is incomplete.');
-      }
-      const str = tmpStr + chunk;
-      const obj = JSON.parse(str);
-      tmpStr = '';
-      time = 0;
-      return obj;
-    } catch (err) {
-      tmpStr += chunk;
-      time = time || start;
-      return null;
-    }
-  })();
+/**
+ * @param {string} str
+ */
+const handler = async (str) => {
+  const start = performance.now();
+  /** @type {InteractiveData} */
+  const json = JSON.parse(str);
 
   switch (json?.cmd) {
     case Command.Lint: {
@@ -164,7 +231,27 @@ process.stdin.on('data', async (data) => {
       console.error(workers, configFilesMap.entries());
       break;
     }
+    case Command.Save:
+      json.file && savedFile(json.file);
+      break;
   }
+};
+
+/**
+ * Due to the subprocess interaction mechanism of Emacs, a piece of data sent
+ * by Emacs to the subprocess may be divided into multiple pieces of data and
+ * sent separately.
+ * Using readline can avoid this problem, but it is necessary to ensure that
+ * each data sent by Emacs has only one newline character, and the newline
+ * character is at the end of the data.
+ */
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.on('line', (line) => {
+  handler(line);
 });
 
 process.on('unhandledRejection', (reason) => {

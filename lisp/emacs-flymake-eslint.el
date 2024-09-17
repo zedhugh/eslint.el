@@ -132,6 +132,11 @@ All buffers use the same process.")
     (emacs-flymake-eslint--init-process))
   emacs-flymake-eslint--process)
 
+(defun emacs-flymake-eslint--send-json (process &rest json-items)
+  (process-send-string
+   process
+   (format "%s\n" (json-serialize json-items))))
+
 (defun emacs-flymake-eslint-lint-file (filepath &optional buffer)
   "Lint file by a node process which run eslint instance."
   (let ((process (emacs-flymake-eslint--get-process))
@@ -139,9 +144,9 @@ All buffers use the same process.")
                 (with-current-buffer buffer (buffer-string)))))
     (when (and (stringp code)
                (process-live-p process))
-      (process-send-string
+      (emacs-flymake-eslint--send-json
        process
-       (json-serialize (list :cmd "lint" :file filepath :code code))))))
+       :cmd "lint" :file filepath :code code))))
 
 (defun emacs-flymake-eslint-kill-buffer-hook ()
   "Hook function run after buffer killed."
@@ -152,9 +157,19 @@ All buffers use the same process.")
                (bound-and-true-p flymake-mode)
                (member 'emacs-flymake-eslint--checker
                        flymake-diagnostic-functions))
-      (process-send-string
+      (emacs-flymake-eslint--send-json
        process
-       (json-serialize (list :cmd "close" :file filepath))))))
+       :cmd "close" :file filepath))))
+
+(defun emacs-flymake-eslint-after-file-save ()
+  "Hook function run after file saved."
+  (let ((filepath buffer-file-name)
+        (process (when (process-live-p emacs-flymake-eslint--process)
+                   emacs-flymake-eslint--process)))
+    (when (and filepath process (file-regular-p filepath))
+      (emacs-flymake-eslint--send-json
+       process
+       :cmd "save" :file filepath))))
 
 (defun emacs-flymake-eslint--checker (report-fn &rest _ignore)
   (let ((filepath (buffer-file-name)))
@@ -169,7 +184,9 @@ All buffers use the same process.")
     (unless (bound-and-true-p flymake-mode) (flymake-mode 1))
     (add-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker nil t)
     (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook nil t)
-    (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)))
+    (add-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)
+    (add-hook 'after-save-hook #'emacs-flymake-eslint-after-file-save)
+    (add-hook 'after-revert-hook #'emacs-flymake-eslint-after-file-save)))
 
 (defun emacs-flymake-eslint-disable ()
   "Disable `emacs-flymake-eslint' in current buffer."
@@ -184,22 +201,25 @@ All buffers use the same process.")
   "Kill node process of `emacs-flymake-eslint' and disable in current buffer."
   (interactive)
   (when (process-live-p emacs-flymake-eslint--process)
-    (process-send-string
+    (emacs-flymake-eslint--send-json
      emacs-flymake-eslint--process
-     (json-serialize (list :cmd "exit"))))
+     :cmd "exit"))
   (let ((buffer (get-buffer emacs-flymake-eslint--stderr-name)))
     (when (bufferp buffer) (kill-buffer buffer)))
   (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker)
   (remove-hook 'flymake-diagnostic-functions #'emacs-flymake-eslint--checker t)
   (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook)
-  (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook t))
+  (remove-hook 'kill-buffer-hook #'emacs-flymake-eslint-kill-buffer-hook t)
+  (remove-hook 'after-save-hook #'emacs-flymake-eslint-after-file-save)
+  (remove-hook 'after-revert-hook #'emacs-flymake-eslint-after-file-save))
 
 (defun emacs-flymake-eslint-log ()
   "Log current info of node process."
   (interactive)
   (when (process-live-p emacs-flymake-eslint--process)
-    (process-send-string emacs-flymake-eslint--process
-                         (json-serialize (list :cmd "log")))))
+    (emacs-flymake-eslint--send-json
+     emacs-flymake-eslint--process
+     :cmd "log")))
 
 
 (provide 'emacs-flymake-eslint)

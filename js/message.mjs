@@ -3,11 +3,17 @@
  * @typedef {import("./message").ESLintMessage} ESLintMessage
  */
 
+export const ReloadReason = Object.freeze({
+  DepsChange: 1,
+  ConfigChange: 2,
+});
+
 export const Command = Object.freeze({
   Lint: 'lint',
   Close: 'close',
   Exit: 'exit',
   Log: 'log',
+  Save: 'save',
 });
 
 /**
