@@ -21,11 +21,17 @@ const loadESLint = async (root) => {
     with: { type: 'json' },
   }).then((obj) => obj.default || obj);
   /** @type {string} */
-  const apiJs = json.exports?.['.'] || json.main;
+  let apiJs = json.exports?.['.'] || json.main;
+  if (apiJs && typeof apiJs === 'object') {
+    apiJs = apiJs.default;
+  }
   /** @type {string | undefined} */
-  const riskJs =
+  let riskJs =
     json.exports?.['./use-at-your-own-risk'] ||
     json.exports?.['use-at-your-own-risk'];
+  if (riskJs && typeof riskJs === 'object') {
+    riskJs = riskJs.default;
+  }
   /** @type {typeof import("eslint")} */
   const { ESLint } = await import(path.join(root, apiJs));
   /** @type {typeof import("eslint/use-at-your-own-risk")} */
