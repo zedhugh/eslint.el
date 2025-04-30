@@ -1,6 +1,6 @@
 /**
  * @typedef {import("eslint").ESLint.LintResult} LintResult
- * @typedef {import("./message").ESLintMessage} ESLintMessage
+ * @typedef {import("./message.mjs").ESLintMessage} ESLintMessage
  */
 
 export const ReloadReason = Object.freeze({

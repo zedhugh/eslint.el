@@ -196,6 +196,11 @@ const sendResultToEmacs = (result) => {
   console.log(JSON.stringify(result));
 };
 
+/** @type {Map<string, string>} */
+const fileCodeMap = new Map();
+/** @type {Map<string, ESLintMessage[] | null>} */
+const cacheResultMap = new Map();
+
 /**
  * @param {string} str
  */
@@ -208,12 +213,27 @@ const handler = async (str) => {
     case Command.Lint: {
       const { file, code } = json;
       console.error(json.cmd, file);
+      const lastCode = fileCodeMap.get(file);
+      if (lastCode === code) {
+        sendResultToEmacs({
+          file,
+          cost: performance.now() - start,
+          messages: cacheResultMap.get(file),
+        });
+        break;
+      }
+
+      fileCodeMap.set(file, code);
       const result = await lintFile(file, code);
-      sendResultToEmacs({
-        file,
-        cost: performance.now() - start,
-        messages: result?.length ? result : undefined,
-      });
+      if (code === fileCodeMap.get(file)) {
+        cacheResultMap.set(file, result);
+        sendResultToEmacs({
+          file,
+          cost: performance.now() - start,
+          messages: result?.length ? result : undefined,
+        });
+      }
+
       break;
     }
     case Command.Close:
