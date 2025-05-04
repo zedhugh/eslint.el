@@ -72,7 +72,9 @@ All buffers use the same process.")
 
 (defun emacs-flymake-eslint--filter (stdout-output stdout-buffer stderr-buffer)
   (condition-case err
-      (let* ((obj (json-parse-string stdout-output :object-type 'alist))
+      (let* ((obj (json-parse-string stdout-output
+                                     :object-type 'alist
+                                     :null-object nil))
              (filepath  (alist-get 'file obj))
              (buffer (find-buffer-visiting filepath))
              cost messages report-fn diags)
