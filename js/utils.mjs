@@ -194,3 +194,19 @@ export const needReloadESLintInstance = (filepath) => {
 
   return false;
 };
+
+const file = path.join(import.meta.dirname, '../log.txt');
+fs.writeFileSync(file, '');
+
+/**
+ * @param {string | object} data
+ * @param {string} [prompt]
+ */
+export const logToDebugFile = (data, prompt) => {
+  const text = typeof data === 'string' ? data : JSON.stringify(data);
+  const p = prompt ? ` ${prompt} ` : '';
+  const msg = `=====================${p}======================
+${text}
+`;
+  fs.appendFile(file, msg, () => {});
+};
