@@ -64,18 +64,16 @@ const eslintInstancePromise = loadESLint(root);
  * @param {WorkerInput} input
  */
 const onMessage = async (input) => {
-  const { code, filepath } = input;
+  const { code, filepath, id } = input;
   waitingFileCodeMap.set(filepath, code);
 
   const eslint = await eslintInstancePromise;
   waitingFileCodeMap.forEach(async (code, filepath) => {
     waitingFileCodeMap.delete(filepath);
     const result = await eslint.lintText(code, { filePath: filepath });
+    const messages = parseLintResult(result, filepath);
     /** @type {WorkerOutput} */
-    const output = {
-      filepath,
-      messages: parseLintResult(result, filepath),
-    };
+    const output = { id, messages };
     parentPort?.postMessage(output);
   });
 };

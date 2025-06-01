@@ -1,12 +1,13 @@
 import type { ESLintMessage } from './message.mjs';
 
 export interface WorkerInput {
+  id: number;
   code: string;
   filepath: string;
 }
 
 export interface WorkerOutput {
-  filepath: string;
+  id: number;
   messages: ESLintMessage[];
 }
 

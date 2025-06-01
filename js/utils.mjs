@@ -116,7 +116,6 @@ const filesExistInDir = (files, dir) => {
  * @param {string} filepath
  */
 export const findEslintConfigFile = (filepath) => {
-  // const rootDir = findRootDir(filepath);
   let dir = path.dirname(filepath);
   let prevDir = '';
   for (;;) {
