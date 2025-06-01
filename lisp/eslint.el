@@ -28,11 +28,8 @@
 
 
 ;;; Private function
-(defun eslint--detect-node-cmd ()
-  (locate-file "node" exec-path))
-
 (defun eslint--new-connection ()
-  (let ((node (eslint--detect-node-cmd)))
+  (let ((node (eslint-detect-node-cmd)))
     (when (and node (file-exists-p eslint--js-file))
       (make-instance
        'jsonrpc-process-connection
@@ -50,6 +47,11 @@
 (defun eslint--init-connection ()
   (unless (jsonrpc-process-connection-p eslint--connection)
     (setq eslint--connection (eslint--new-connection))))
+
+
+;;; public function
+(defun eslint-detect-node-cmd ()
+  (locate-file "node" exec-path))
 
 (defun eslint-lint-file (file buffer &optional success-fn error-fn)
   "Lint the file named FILE by a node process which run eslint instance.
