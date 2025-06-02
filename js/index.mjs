@@ -1,4 +1,4 @@
-import { closeFile, lintFile } from './eslint.mjs';
+import { closeFile, getConfigMaps, lintFile } from './eslint.mjs';
 import { invalidParams, methodNotFound } from './jsonrpc-error.mjs';
 import {
   addNotifyFn,
@@ -29,6 +29,7 @@ const close = (params) => {
 };
 
 setRequestFn('lint', lint);
+setRequestFn('debug', getConfigMaps);
 addNotifyFn('close', close);
 
 process.stdin.on('data', createInputDataHandler());

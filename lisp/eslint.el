@@ -78,5 +78,11 @@ JSONRPC `:result' or `:error' object respectively."
              (jsonrpc-process-connection-p eslint--connection))
     (jsonrpc-notify eslint--connection "close" (list :file file))))
 
+(defun eslint--show-cached-info ()
+  "Show data of configWorkerMap and configFilesMap in node process."
+  (eslint--init-connection)
+  (when (jsonrpc-process-connection-p eslint--connection)
+    (jsonrpc-request eslint--connection "debug" nil)))
+
 
 (provide 'eslint)

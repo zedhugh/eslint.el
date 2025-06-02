@@ -143,4 +143,16 @@ export const closeFile = (filepath) => {
     process.exit(0);
   }
 };
+
+export const getConfigMaps = () => {
+  return {
+    workers: [...configWorkerMap.entries()].map(([config, worker]) => [
+      config,
+      worker?.threadId ?? null,
+    ]),
+    files: [...configFilesMap.entries()].map(([config, fileSet]) => [
+      config,
+      [...fileSet],
+    ]),
+  };
 };
