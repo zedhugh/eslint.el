@@ -58,10 +58,21 @@ const assignESLintWorker = (config) => {
 
 /**
  * @param {string} filepath
+ * @returns {string | null}
+ */
+const getEslintConfigFile = (filepath) => {
+  for (const [config, set] of configFilesMap.entries()) {
+    if (set.has(filepath)) return config;
+  }
+  return findEslintConfigFile(filepath);
+};
+
+/**
+ * @param {string} filepath
  * @returns {Worker | null}
  */
 const getFilepathWorker = (filepath) => {
-  const config = findEslintConfigFile(filepath);
+  const config = getEslintConfigFile(filepath);
   if (!config) return null;
 
   addConfigFile2Map(config, filepath);
