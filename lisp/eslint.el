@@ -53,25 +53,23 @@
 (defun eslint-detect-node-cmd ()
   (locate-file "node" exec-path))
 
-(defun eslint-lint-file (file buffer &optional success-fn error-fn)
+(defun eslint-lint-file (file code &optional success-fn error-fn)
   "Lint the file named FILE by a node process which run eslint instance.
 
-BUFFER is accociated with the FILE.
+CODE is content of FILE.
 
 SUCCESS-FN or ERROR-FN will be called with a
 JSONRPC `:result' or `:error' object respectively."
   (eslint--init-connection)
-  (let ((code (when (bufferp buffer)
-                (with-current-buffer buffer (buffer-string)))))
-    (when (and file
-               (stringp file)
-               (stringp code)
-               (jsonrpc-process-connection-p eslint--connection))
-      (jsonrpc-async-request
-       eslint--connection "lint"
-       (list :file file :code code)
-       :success-fn success-fn :error-fn error-fn)
-      )))
+  (when (and file
+             (stringp file)
+             (stringp code)
+             (jsonrpc-process-connection-p eslint--connection))
+    (jsonrpc-async-request
+     eslint--connection "lint"
+     (list :file file :code code)
+     :success-fn success-fn :error-fn error-fn)
+    ))
 
 
 (provide 'eslint)
