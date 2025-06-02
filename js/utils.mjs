@@ -178,6 +178,27 @@ export const getESLintInstallDir = (filepath) => {
 };
 
 /**
+ * @param {import('./worker').WorkerConfig} workerConfig
+ * @param {() => void} cb
+ */
+export const watchFileForWorker = (workerConfig, cb) => {
+  const { config, root } = workerConfig;
+  const fileList = [config];
+  const rootDir = path.join(root, '../../');
+  packageManagerLockFiles.forEach((filename) => {
+    const filepath = path.join(rootDir, filename);
+    if (fs.existsSync(filepath)) fileList.push(filepath);
+  });
+  const abortController = new AbortController();
+  fileList.forEach((file) => {
+    fs.watch(file, { signal: abortController.signal }, () => {
+      abortController.abort();
+      cb();
+    });
+  });
+};
+
+/**
  * @param {string} filepath
  */
 export const needReloadESLintInstance = (filepath) => {
