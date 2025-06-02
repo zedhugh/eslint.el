@@ -1,6 +1,10 @@
-import { lintFile } from './eslint.mjs';
-import { methodNotFound } from './jsonrpc-error.mjs';
-import { createInputDataHandler, setRequestFn } from './jsonrpc.mjs';
+import { closeFile, lintFile } from './eslint.mjs';
+import { invalidParams, methodNotFound } from './jsonrpc-error.mjs';
+import {
+  addNotifyFn,
+  createInputDataHandler,
+  setRequestFn,
+} from './jsonrpc.mjs';
 
 /**
  * @param {{code: string, file: string}} params
@@ -14,6 +18,17 @@ const lint = async (params) => {
   return lintFile(file, code);
 };
 
+/**
+ * @param {{file: string}} params
+ */
+const close = (params) => {
+  if (typeof params !== 'object' || typeof params.file !== 'string') {
+    throw invalidParams('params need to be structured as {file: string}');
+  }
+  closeFile(params.file);
+};
+
 setRequestFn('lint', lint);
+addNotifyFn('close', close);
 
 process.stdin.on('data', createInputDataHandler());

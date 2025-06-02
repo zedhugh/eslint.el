@@ -79,6 +79,9 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
                :region (cons (point-min) (point-max))))
     (setq eslint-flymake--diagnostics (cons diags version))))
 
+(defun eslint-flymake--kill-buffer-hook ()
+  (eslint-close-file (buffer-file-name)))
+
 (defun eslint-flymake-enable ()
   "Enable `eslint-flymake' in current buffer."
   (interactive)
@@ -86,6 +89,7 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
     (unless (bound-and-true-p flymake-mode) (flymake-mode 1))
     (add-hook 'flymake-diagnostic-functions #'eslint-flymake-backend nil t)
     (add-hook 'after-change-functions #'eslint-flymake--after-change nil t)
+    (add-hook 'kill-buffer-hook #'eslint-flymake--kill-buffer-hook nil t)
     (flymake-start)))
 
 (defun eslint-flymake-disable ()
@@ -94,6 +98,7 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
   (when (functionp eslint-flymake--current-report-fn)
     (eslint-flymake--report nil nil))
   (remove-hook 'flymake-diagnostic-functions #'eslint-flymake-backend t)
-  (remove-hook 'after-change-functions #'eslint-flymake--after-change t))
+  (remove-hook 'after-change-functions #'eslint-flymake--after-change t)
+  (remove-hook 'kill-buffer-hook #'eslint-flymake--kill-buffer-hook t))
 
 (provide 'eslint-flymake)

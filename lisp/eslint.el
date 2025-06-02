@@ -71,5 +71,12 @@ JSONRPC `:result' or `:error' object respectively."
      :success-fn success-fn :error-fn error-fn)
     ))
 
+(defun eslint-close-file (file)
+  "Notify node process FILE closed."
+  (eslint--init-connection)
+  (when (and (stringp file)
+             (jsonrpc-process-connection-p eslint--connection))
+    (jsonrpc-notify eslint--connection "close" (list :file file))))
+
 
 (provide 'eslint)

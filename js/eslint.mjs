@@ -122,3 +122,25 @@ export const lintFile = async (filepath, code) => {
   });
   return promise;
 };
+
+/**
+ * @param {string} filepath
+ */
+export const closeFile = (filepath) => {
+  configFilesMap.forEach((fileSet, config) => {
+    if (!fileSet.has(filepath)) return;
+
+    fileSet.delete(filepath);
+    if (fileSet.size) return;
+
+    const worker = configWorkerMap.get(config);
+    worker?.terminate();
+    configWorkerMap.delete(config);
+    configFilesMap.delete(config);
+  });
+
+  if (!configWorkerMap.size) {
+    process.exit(0);
+  }
+};
+};
