@@ -1,6 +1,12 @@
 import path from 'node:path';
 import { Worker } from 'node:worker_threads';
 import { findEslintConfigFile, getESLintInstallDir } from './utils.mjs';
+import {
+  serverError,
+  workerExitError,
+  workerReloadError,
+} from './jsonrpc-error.mjs';
+import { WorkerReloadExitCode } from './config.mjs';
 
 /**
  * @typedef {import("./worker").WorkerConfig} WorkerConfig
@@ -43,10 +49,12 @@ const assignESLintWorker = (config) => {
   /** @type {WorkerConfig} */
   const workerConfig = { root, config };
   const worker = new Worker(workerFile, { workerData: workerConfig });
-  worker.on('exit', () => {
+  const onWorkerDead = () => {
     configWorkerMap.delete(config);
     configFilesMap.delete(config);
-  });
+  };
+  worker.on('exit', onWorkerDead);
+  worker.on('error', onWorkerDead);
   configWorkerMap.set(config, worker);
   return worker;
 };
@@ -99,18 +107,46 @@ export const lintFile = async (filepath, code) => {
   const worker = getFilepathWorker(filepath);
   if (!worker) return null;
 
-  const promise = new Promise((resolve) => {
+  const promise = new Promise((resolve, reject) => {
     const id = getId();
+    const clean = () => {
+      worker.off('exit', onExit);
+      worker.off('error', onError);
+      worker.off('message', onMessage);
+    };
     /**
      * @param {WorkerOutput} value
      */
-    const listener = (value) => {
+    const onMessage = (value) => {
       if (value.id !== id) return;
+      clean();
       resolve(value.messages);
-      worker.off('message', listener);
+    };
+    /**
+     * @param {number} exitCode
+     */
+    const onExit = (exitCode) => {
+      clean();
+      switch (exitCode) {
+        case WorkerReloadExitCode:
+          reject(workerReloadError());
+          break;
+        default:
+          reject(workerExitError({ exitCode }));
+          break;
+      }
+    };
+    /**
+     * @param {Error} error
+     */
+    const onError = (error) => {
+      clean();
+      reject(serverError(error.stack));
     };
 
-    worker.on('message', listener);
+    worker.on('exit', onExit);
+    worker.on('error', onError);
+    worker.on('message', onMessage);
     /** @type {import('./worker').WorkerInput} */
     const msg = { id, code, filepath };
     worker.postMessage(msg);

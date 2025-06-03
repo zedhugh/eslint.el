@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { parentPort, workerData } from 'node:worker_threads';
-import { pkgJson, workerExitCodeWhenTerminated } from './config.mjs';
+import { pkgJson, WorkerReloadExitCode } from './config.mjs';
 import { parseLintResult } from './message.mjs';
 import { watchFileForWorker } from './utils.mjs';
 
@@ -61,7 +61,7 @@ const workerConfig = workerData;
 
 const eslintInstancePromise = loadESLint(workerConfig.root);
 watchFileForWorker(workerConfig, () => {
-  process.exit(workerExitCodeWhenTerminated);
+  process.exit(WorkerReloadExitCode);
 });
 
 /**

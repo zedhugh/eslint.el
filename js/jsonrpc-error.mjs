@@ -3,6 +3,8 @@
  * @typedef {<D = unknown>(data?: D) => JSONRPCErrorBody<D>} ErrorCreator
  */
 
+import { WorkerReloadExitCode } from './config.mjs';
+
 /** @type {JSONRPCErrorBody} */
 const ParseError = { code: -32700, message: 'Parse error' };
 /** @type {JSONRPCErrorBody} */
@@ -15,6 +17,13 @@ const InvalidParams = { code: -32601, message: 'Invalid params' };
 const InternalError = { code: -32603, message: 'Internal error' };
 /** @type {JSONRPCErrorBody} */
 const ServerError = { code: -32000, message: 'Server error' };
+/** @type {JSONRPCErrorBody} */
+const WorkerExitError = { code: -32001, message: 'Worker exited' };
+/** @type {JSONRPCErrorBody} */
+const WorkerReloadError = {
+  code: WorkerReloadExitCode,
+  message: 'Worker need reload',
+};
 
 /** @type {ErrorCreator} */
 export const parseError = (data) => ({ ...ParseError, data });
@@ -28,6 +37,10 @@ export const invalidParams = (data) => ({ ...InvalidParams, data });
 export const internalError = (data) => ({ ...InternalError, data });
 /** @type {ErrorCreator} */
 export const serverError = (data) => ({ ...ServerError, data });
+/** @type {ErrorCreator} */
+export const workerReloadError = (data) => ({ ...WorkerReloadError, data });
+/** @type {ErrorCreator} */
+export const workerExitError = (data) => ({ ...WorkerExitError, data });
 
 /**
  * @param {JSONRPCErrorBody} err

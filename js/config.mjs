@@ -21,4 +21,4 @@ export const packageManagerLockFiles = Object.freeze([
   'yarn.lock',
 ]);
 
-export const workerExitCodeWhenTerminated = -32001;
+export const WorkerReloadExitCode = -32002;

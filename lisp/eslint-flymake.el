@@ -27,7 +27,8 @@
       (setq type "error"
             type-symbol :error))
     (setq msg-text (format "%s: %s [%s]" type message ruleId))
-    (flymake-make-diagnostic buffer begin end type-symbol msg-text
+    (flymake-make-diagnostic buffer begin end type-symbol
+                             (list "eslint" ruleId msg-text)
                              (list :rule-name ruleId))))
 
 (defvar-local eslint-flymake--versioned-identifier 0
@@ -43,6 +44,10 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
   (cl-incf eslint-flymake--versioned-identifier))
 
 (defun eslint-flymake-backend (report-fn &rest _ignore)
+  (when eslint-flymake--error
+    (setq eslint-flymake--error nil)
+    (error eslint-flymake--error))
+
   (let ((filepath (buffer-file-name))
         (buffer (current-buffer))
         (version eslint-flymake--versioned-identifier)
@@ -55,9 +60,28 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
           (save-restriction (widen) (setq code (buffer-string)))
           (eslint-lint-file
            filepath code
-           (lambda (result) (eslint-flymake--success result buffer version)))
+           (lambda (result) (eslint-flymake--success result buffer version))
+           (lambda (err) (eslint-flymake--error err buffer)))
           )
       (funcall report-fn nil))))
+
+(defvar-local eslint-flymake--error nil
+  "Error message returned by eslint jsonrpc request.")
+
+(defun eslint-flymake--error (err buffer)
+  (with-current-buffer buffer
+    (let* ((code (plist-get err :code))
+           (message (plist-get err :message))
+           (data (plist-get err :data)))
+      (cond ((= code -32000) ;; fatal
+             (setq eslint-flymake--error
+                   (if data (format "%s: %s" message data) message))
+             (flymake-start))
+            (t
+             (if data
+                 (message "[%s] %s: %s" code message data)
+               (message "[%s] %s" code message)))
+            ))))
 
 (defun eslint-flymake--success (result buffer version)
   (with-current-buffer buffer
