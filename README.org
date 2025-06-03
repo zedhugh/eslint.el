@@ -1,6 +1,6 @@
-* emacs-flymake-eslint
+* eslint.el
 
-emacs-flymake-eslint 的目标是为 emacs 是提供一个更快的体验更好的基于 flymake 的 eslint 插件。
+eslint.el 的目标是为 emacs 是提供一个更快的体验更好的 eslint 插件。同时内置了对 flymake 的支持。
 
 ** 实现原理
 核心原理是 [[https://eslint.org/docs/latest/integrate/integration-tutorial][Integrate Tutorial]] ，并根据 eslint 配置文件划分 worker ，每个 eslint 配置文件对应一个

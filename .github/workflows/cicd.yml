@@ -10,14 +10,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: prepare output directory
-        run: mkdir -p flymake-eslint
+        run: mkdir -p eslint.el
       - name: copy files
-        run: cp -r js/ lisp/ flymake-eslint
+        run: cp -r js/ lisp/ eslint.el
       - name: make output tarball
         uses: actions/upload-artifact@v4
         with:
-          path: flymake-eslint/**/*
-          name: emacs-flymake-eslint
+          path: eslint.el/**/*
+          name: eslint.el
 
   deploy:
     needs: build
@@ -29,7 +29,7 @@ jobs:
       - name: use output tarball
         uses: actions/download-artifact@v4
         with:
-          name: emacs-flymake-eslint
+          name: eslint.el
       - run: ls -lha
       - name: deploy
         uses: peaceiris/actions-gh-pages@v3

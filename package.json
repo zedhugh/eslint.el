@@ -1,5 +1,5 @@
 {
-  "name": "emacs-flymake-eslint",
+  "name": "eslint.el",
   "version": "0.0.1",
   "private": true,
   "description": "better eslint plugin for flymake in emacs",
