@@ -198,23 +198,6 @@ export const watchFileForWorker = (workerConfig, cb) => {
   });
 };
 
-/**
- * @param {string} filepath
- */
-export const needReloadESLintInstance = (filepath) => {
-  if (filepathInNodeModulesDir(filepath)) return false;
-
-  const filename = path.basename(filepath);
-  if (filename === pkgJson || packageManagerLockFiles.includes(filename)) {
-    return ReloadReason.DepsChange;
-  }
-  if (eslintConfigFiles.includes(filename)) {
-    return ReloadReason.ConfigChange;
-  }
-
-  return false;
-};
-
 const file = path.join(import.meta.dirname, '../log.txt');
 fs.writeFileSync(file, '');
 
