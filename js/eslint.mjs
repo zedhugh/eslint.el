@@ -1,10 +1,6 @@
 import path from 'node:path';
 import { Worker } from 'node:worker_threads';
-import {
-  findEslintConfigFile,
-  getESLintInstallDir,
-  watchFileForWorker,
-} from './utils.mjs';
+import { findEslintConfigFile, getESLintInstallDir } from './utils.mjs';
 
 /**
  * @typedef {import("./worker").WorkerConfig} WorkerConfig
@@ -47,8 +43,7 @@ const assignESLintWorker = (config) => {
   /** @type {WorkerConfig} */
   const workerConfig = { root, config };
   const worker = new Worker(workerFile, { workerData: workerConfig });
-  watchFileForWorker(workerConfig, () => {
-    worker.terminate();
+  worker.on('exit', () => {
     configWorkerMap.delete(config);
     configFilesMap.delete(config);
   });

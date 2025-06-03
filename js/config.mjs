@@ -20,3 +20,5 @@ export const packageManagerLockFiles = Object.freeze([
   'pnpm-lock.yaml',
   'yarn.lock',
 ]);
+
+export const workerExitCodeWhenTerminated = -32001;

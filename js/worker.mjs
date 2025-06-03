@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { parentPort, workerData } from 'node:worker_threads';
-import { pkgJson } from './config.mjs';
+import { pkgJson, workerExitCodeWhenTerminated } from './config.mjs';
 import { parseLintResult } from './message.mjs';
+import { watchFileForWorker } from './utils.mjs';
 
 /**
  * @typedef {import("eslint").ESLint} ESLint
@@ -56,9 +57,12 @@ const loadESLint = async (root) => {
 const waitingFileCodeMap = new Map();
 
 /** @type {WorkerConfig} */
-const { root } = workerData;
+const workerConfig = workerData;
 
-const eslintInstancePromise = loadESLint(root);
+const eslintInstancePromise = loadESLint(workerConfig.root);
+watchFileForWorker(workerConfig, () => {
+  process.exit(workerExitCodeWhenTerminated);
+});
 
 /**
  * @param {WorkerInput} input
