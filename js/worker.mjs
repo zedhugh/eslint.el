@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { parentPort, workerData } from 'node:worker_threads';
-import { pkgJson } from './config.mjs';
+import { pkgJson, WorkerReloadExitCode } from './config.mjs';
 import { parseLintResult } from './message.mjs';
+import { watchFileForWorker } from './utils.mjs';
 
 /**
  * @typedef {import("eslint").ESLint} ESLint
@@ -56,26 +57,27 @@ const loadESLint = async (root) => {
 const waitingFileCodeMap = new Map();
 
 /** @type {WorkerConfig} */
-const { root } = workerData;
+const workerConfig = workerData;
 
-const eslintInstancePromise = loadESLint(root);
+const eslintInstancePromise = loadESLint(workerConfig.root);
+watchFileForWorker(workerConfig, () => {
+  process.exit(WorkerReloadExitCode);
+});
 
 /**
  * @param {WorkerInput} input
  */
 const onMessage = async (input) => {
-  const { code, filepath } = input;
+  const { code, filepath, id } = input;
   waitingFileCodeMap.set(filepath, code);
 
   const eslint = await eslintInstancePromise;
   waitingFileCodeMap.forEach(async (code, filepath) => {
     waitingFileCodeMap.delete(filepath);
     const result = await eslint.lintText(code, { filePath: filepath });
+    const messages = parseLintResult(result, filepath);
     /** @type {WorkerOutput} */
-    const output = {
-      filepath,
-      messages: parseLintResult(result, filepath),
-    };
+    const output = { id, messages };
     parentPort?.postMessage(output);
   });
 };

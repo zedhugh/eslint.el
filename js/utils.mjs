@@ -116,7 +116,6 @@ const filesExistInDir = (files, dir) => {
  * @param {string} filepath
  */
 export const findEslintConfigFile = (filepath) => {
-  // const rootDir = findRootDir(filepath);
   let dir = path.dirname(filepath);
   let prevDir = '';
   for (;;) {
@@ -179,18 +178,38 @@ export const getESLintInstallDir = (filepath) => {
 };
 
 /**
- * @param {string} filepath
+ * @param {import('./worker').WorkerConfig} workerConfig
+ * @param {() => void} cb
  */
-export const needReloadESLintInstance = (filepath) => {
-  if (filepathInNodeModulesDir(filepath)) return false;
+export const watchFileForWorker = (workerConfig, cb) => {
+  const { config, root } = workerConfig;
+  const fileList = [config];
+  const rootDir = path.join(root, '../../');
+  packageManagerLockFiles.forEach((filename) => {
+    const filepath = path.join(rootDir, filename);
+    if (fs.existsSync(filepath)) fileList.push(filepath);
+  });
+  const abortController = new AbortController();
+  fileList.forEach((file) => {
+    fs.watch(file, { signal: abortController.signal }, () => {
+      abortController.abort();
+      cb();
+    });
+  });
+};
 
-  const filename = path.basename(filepath);
-  if (filename === pkgJson || packageManagerLockFiles.includes(filename)) {
-    return ReloadReason.DepsChange;
-  }
-  if (eslintConfigFiles.includes(filename)) {
-    return ReloadReason.ConfigChange;
-  }
+const file = path.join(import.meta.dirname, '../log.txt');
+fs.writeFileSync(file, '');
 
-  return false;
+/**
+ * @param {string | object} data
+ * @param {string} [prompt]
+ */
+export const logToDebugFile = (data, prompt) => {
+  const text = typeof data === 'string' ? data : JSON.stringify(data);
+  const p = prompt ? ` ${prompt} ` : '';
+  const msg = `=====================${p}======================
+${text}
+`;
+  fs.appendFile(file, msg, () => {});
 };
