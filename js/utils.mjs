@@ -8,7 +8,6 @@ import {
   packageManagerLockFiles,
   pkgJson,
 } from './config.mjs';
-import { ReloadReason } from './message.mjs';
 
 /**
  * @param {string} cmd

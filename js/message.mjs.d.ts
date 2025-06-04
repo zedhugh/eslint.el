@@ -1,4 +1,4 @@
-import type { Linter } from 'eslint';
+import type { Linter, ESLint } from 'eslint';
 
 export interface ESLintMessage {
   ruleId: string;
@@ -19,14 +19,6 @@ export interface Result {
   file: string;
   cost: number;
   messages?: ESLintMessage[];
-}
-
-/**
- * Reason for reload ESLint Worker
- */
-export const enum ReloadReason {
-  DepsChange = 1,
-  ConfigChange = 2,
 }
 
 export const enum Command {
