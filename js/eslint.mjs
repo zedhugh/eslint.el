@@ -76,7 +76,7 @@ const getEslintConfigFile = (filepath) => {
  */
 const getFilepathWorker = (filepath) => {
   const config = getEslintConfigFile(filepath);
-  if (!config) return null;
+  if (!config) throw serverError('No config file');
 
   addConfigFile2Map(config, filepath);
 
@@ -141,7 +141,7 @@ export const lintFile = async (filepath, code) => {
      */
     const onError = (error) => {
       clean();
-      reject(serverError(error.stack));
+      reject(error);
     };
 
     worker.on('exit', onExit);

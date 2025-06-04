@@ -8,7 +8,6 @@ import {
   packageManagerLockFiles,
   pkgJson,
 } from './config.mjs';
-import { ReloadReason } from './message.mjs';
 
 /**
  * @param {string} cmd
@@ -199,7 +198,6 @@ export const watchFileForWorker = (workerConfig, cb) => {
 };
 
 const file = path.join(import.meta.dirname, '../log.txt');
-fs.writeFileSync(file, '');
 
 /**
  * @param {string | object} data

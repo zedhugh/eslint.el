@@ -115,6 +115,22 @@ const methodHandler = (json) => {
   }
 };
 
+/**
+ * @param {string} str
+ * @param {number} [start]
+ * @param {number} [end]
+ */
+const byteSlice = (str, start, end) => {
+  const bytes = new TextEncoder().encode(str);
+  const sliceBytes = bytes.slice(start, end);
+  return new TextDecoder().decode(sliceBytes);
+};
+
+/**
+ * @param {string} str
+ */
+const byteLength = (str) => new TextEncoder().encode(str).byteLength;
+
 export const createInputDataHandler = () => {
   let jsonBuffer = '';
   const regExp = /(.*)?(\r\n)*Content-Length: (\d+)(\r\n)*(.*)/gm;
@@ -131,12 +147,12 @@ export const createInputDataHandler = () => {
     while ((match = regExp.exec(jsonBuffer))) {
       const len = +match[3];
       const text = match[5];
-      if (len > text.length) break;
+      if (len > byteLength(text)) break;
 
-      const jsonText = text.slice(0, len);
+      const jsonText = byteSlice(text, 0, len);
       jsonTextList.push(jsonText);
 
-      const r = text.slice(len);
+      const r = byteSlice(text, len);
       jsonBuffer = `${r}${jsonBuffer.slice(regExp.lastIndex)}`;
       regExp.lastIndex = 0;
     }
