@@ -63,3 +63,8 @@ export type InteractiveData =
   | ExitData
   | LogData
   | SaveData;
+
+export const parseLintResult: (
+  result: ESLint.LintResult[],
+  filepath: string,
+) => ESLintMessage[];
