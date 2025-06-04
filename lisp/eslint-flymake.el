@@ -44,9 +44,10 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
   (cl-incf eslint-flymake--versioned-identifier))
 
 (defun eslint-flymake-backend (report-fn &rest _ignore)
-  (when eslint-flymake--error
-    (setq eslint-flymake--error nil)
-    (error eslint-flymake--error))
+  (when eslint-flymake--fatal-error
+    (let ((fatal eslint-flymake--fatal-error))
+      (setq eslint-flymake--fatal-error nil)
+      (error fatal)))
 
   (let ((filepath (buffer-file-name))
         (buffer (current-buffer))
@@ -65,7 +66,7 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
           )
       (funcall report-fn nil))))
 
-(defvar-local eslint-flymake--error nil
+(defvar-local eslint-flymake--fatal-error nil
   "Error message returned by eslint jsonrpc request.")
 
 (defun eslint-flymake--error (err buffer)
@@ -73,14 +74,14 @@ DIAGNOSTICS is a list of Flymake diagnostics objects.  VERSION is the
     (let* ((code (plist-get err :code))
            (message (plist-get err :message))
            (data (plist-get err :data)))
+      (message "eslint flymake error: %s" (or data message))
       (cond ((= code -32000) ;; fatal
-             (setq eslint-flymake--error
+             (setq eslint-flymake--fatal-error
                    (if data (format "%s: %s" message data) message))
              (flymake-start))
             (t
-             (if data
-                 (message "[%s] %s: %s" code message data)
-               (message "[%s] %s" code message)))
+             (eslint-flymake--report (car eslint-flymake--diagnostics)
+                                     (cdr eslint-flymake--diagnostics)))
             ))))
 
 (defun eslint-flymake--success (result buffer version)
