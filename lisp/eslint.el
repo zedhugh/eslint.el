@@ -19,7 +19,7 @@
   :prefix "eslint-"
   :group 'tools)
 
-(defcustom eslint--events-buffer-size nil
+(defcustom eslint-events-buffer-size 2000000
   "Configure the eslint events buffer.
 
 0 disables, nil means infinite."
@@ -36,7 +36,7 @@
        :name "eslint"
        :on-shutdown (lambda (conn) (setq eslint--connection nil))
        :events-buffer-config
-       (list :size eslint--events-buffer-size :format 'full)
+       (list :size eslint-events-buffer-size :format 'full)
        :process
        (make-process
         :name "eslint node process"
