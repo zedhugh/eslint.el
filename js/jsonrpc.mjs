@@ -53,7 +53,7 @@ export const addNotifyFn = (methodName, method) => {
  */
 const sendJson = (json) => {
   const body = JSON.stringify(json);
-  const response = `Content-Length: ${body.length}\r\n\r\n${body}\r\n`;
+  const response = `Content-Length: ${byteLength(body)}\r\n\r\n${body}\r\n`;
   process.stdout.write(response);
 };
 
